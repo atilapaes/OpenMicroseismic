@@ -14,8 +14,8 @@ File:       Main
 Version:    V2
 """
 
-import time, multiprocessing, numpy #Importing libraries from Python
-import om_ped_es_functions_v2, om_ped_es_parameters_v2,om_general_signal_processing #Defined by user
+import time, multiprocessing #Importing libraries from Python
+import om_ped_es_functions_v2, om_ped_es_parameters_v2, om_general_input_data #Defined by user
 
 
 #Initializing time of processing
@@ -23,12 +23,8 @@ start_time = time.time()
 
 print('Initializing Potential-Event detection...')
 
-### List the MS files on the folder
-list_of_files=om_general_signal_processing.list_extensions(om_ped_es_parameters_v2.dataset_folder)
-
-
-### Spliting the array in the number of cores to be used
-file_list_for_cores=numpy.array_split(list_of_files,om_ped_es_parameters_v2.number_of_cores)
+### List files in folder and split in sub-list to send to cores
+file_list_for_cores=om_general_input_data.split_list_of_files(folder_name=om_ped_es_parameters_v2.dataset_folder, number_of_cores=om_ped_es_parameters_v2.number_of_cores)
 
 
 ###############################################################################

@@ -11,28 +11,27 @@ This module is used to import Microseismic data in several different ways.
 
 import obspy, numpy, datetime
 #%% #Retuns content of a file
-""" Reviewed"""
 def input_file(dataset_folder,file_name):
     ms_data=obspy.read(dataset_folder+"/"+file_name)
     return(ms_data)
 #================================================================================================================
 
 #%% Returns the content of two concatenated files or a slice of the first + the second
-def InputTorrent(File1,File2,Partitial_File1=True,Last_Seconds=5):
-    MSDataFile1=obspy.read(File1)  
-    MSDataFile2=obspy.read(File2)  
+def concatenate_files(file1,file2,partitial_file1=True,last_seconds=5):
+    ms_data_file1=obspy.read(file1)  
+    ms_data_file2=obspy.read(file2)  
 
-    if Partitial_File1==True:
-        MSData=MSDataFile2    
-        for Channel in range(len(MSDataFile1)):
-            MSData[Channel] +=MSDataFile1[Channel].slice(MSDataFile1[Channel].stats.endtime-Last_Seconds,MSDataFile1[Channel].stats.endtime)
+    if partitial_file1==True:
+        ms_data=ms_data_file2    
+        for Channel in range(len(ms_data_file1)):
+            ms_data[Channel] +=ms_data_file1[Channel].slice(ms_data_file1[Channel].stats.endtime-last_seconds,ms_data_file1[Channel].stats.endtime)
     else:    
-        MSData=MSDataFile1
-        for Channel in range(len(MSDataFile1)):
-            MSData[Channel] +=MSDataFile2[Channel]   
+        ms_data=ms_data_file1
+        for Channel in range(len(ms_data_file1)):
+            ms_data[Channel] +=ms_data_file2[Channel]   
     
-    return(MSData)
-
+    return(ms_data)    
+    
 #================================================================================================================
 
 #%% Inform a time and extract it from dataset
@@ -172,4 +171,51 @@ def MakeRingBuffer(FirstFile,LastFile, DatasetName):
             MSData[Channel] += MSData_Aux[Channel]    
     
     return(MSData)
+#================================================================================================================
 
+#%% Returns the content of two concatenated files or a slice of the first + the second
+
+def input_torrent(dataset_folder, list_of_files, file_number, last_seconds):
+    """
+    For a list o file names, this function concatenate files with previous one, except for the first file.
+    It is mainly used as data torrent for STA/LTA calculations.
+    """
+    
+    if file_number == 0:
+        ms_data=obspy.read(dataset_folder+"/"+list_of_files[0])
+    
+    else:
+        ms_data_file1=obspy.read(dataset_folder+"/"+list_of_files[file_number-1])
+        ms_data_file2=obspy.read(dataset_folder+"/"+list_of_files[file_number])
+
+        ms_data=ms_data_file2    
+        for channel in range(len(ms_data_file1)):
+            ms_data[channel] +=ms_data_file1[channel].slice(ms_data_file1[channel].stats.endtime-last_seconds,ms_data_file1[channel].stats.endtime)
+    return(ms_data)
+#================================================================================================================
+
+#%% Make a list of files to be used in input_torrent
+def split_list_of_files(folder_name, number_of_cores):
+    """
+    List MS Data files in a given dataset. 
+    Divide in N sub-lists.
+    Include the last element in sub-list X as first element in list X+1.
+    
+    Original list: [a b c] [d e f] [g h i] [j l m]
+    New list:      [a b c] [c d e f] [f g h i] [i j l m]
+    """
+    import numpy, om_general_signal_processing    
+    
+    ### List the MS files on the folder
+    list_of_files=om_general_signal_processing.list_extensions(folder_name)
+    
+    ### Spliting the array in the number of cores to be used- Includes case of N cores =1
+    file_list_for_cores=numpy.array_split(list_of_files,number_of_cores)
+    
+    if number_of_cores != 1:    
+        # Insert the last file of list N-1 in the beginning of list N
+        for list_index in range(1,number_of_cores):
+            file_list_for_cores[list_index]=numpy.insert(file_list_for_cores[list_index],0,file_list_for_cores[list_index-1][-1])
+            
+    return(file_list_for_cores)
+#================================================================================================================

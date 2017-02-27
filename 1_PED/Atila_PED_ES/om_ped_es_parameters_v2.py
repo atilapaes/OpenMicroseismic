@@ -10,15 +10,15 @@ Project:    OpenMicroseismic
 Pack:       Potential-Event Detection
 Method:     Energy-stack
 File:       Parameters
-Version:    V2
+Version:    V2.
 """
 
 import multiprocessing
 
 ##################################################################
 #%% Name of the dataset folder
-dataset_folder="HornRiver-C88-S9F"
-#dataset_folder="Dataset"
+#dataset_folder="HornRiver-C88-S9F"
+dataset_folder="Dataset2"
 
 
 ##################################################################
@@ -45,8 +45,8 @@ moving_average_samples=100
 
 #%% Detecting peaks
 
-threshold_stds=2 #3 is too restrictive cause it may not detect low-SNR event beside a high-SNR 
-
+threshold_stds=0 #3 is too restrictive cause it may not detect low-SNR event beside a high-SNR 
+threshold_means=3
 
 # Detect peaks that are at least separated by minimum peak distance (in  number of data). Due QC, 100 is reasonable number.
 mpd=100 
@@ -54,3 +54,6 @@ mpd=100
 # Quality control: 
 peak_width_minimum=500  # Minimum peak width 
 peak_snr_minimum=4      # Minimum peak SNR
+
+#data torrent --> explain very well the meaning of last_seconds = LTA +0.5 sec + 2 seconds
+last_seconds=6

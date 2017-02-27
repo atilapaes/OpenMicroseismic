@@ -18,7 +18,7 @@ Version:    V2
 #%% Main function of the Energy Stack method
 ##################################################################################################    
 def energy_stack(dataset_folder,list_of_files,core_counter):
-    import numpy, datetime, om_ped_es_parameters_v2, om_general_input_data, om_general_signal_processing, om_ped_es_functions_v2
+    import numpy, datetime, om_ped_es_parameters_v2, om_general_input_data, om_general_signal_processing
     
     if om_ped_es_parameters_v2.verbose_level <= 1:
          print('Core number ',core_counter, '-> Initializing...')
@@ -27,31 +27,26 @@ def energy_stack(dataset_folder,list_of_files,core_counter):
     identified_events=[]
     peaks_properties=[]
     
-    #=============================================
+    #==Loop over the file list=================================================
     for file_number in range(len(list_of_files)):
-        # Name the file to be processed
-        name_raw_file=list_of_files[file_number]
+        print('List of files ',list_of_files)
+        
+        ### Loading MS Data using torrent method ==============================
+        ms_data=om_general_input_data.input_torrent(dataset_folder=dataset_folder, list_of_files=list_of_files, file_number=file_number, last_seconds=om_ped_es_parameters_v2.last_seconds)                
 
         #Software log
         if om_ped_es_parameters_v2.verbose_level <= 1 and core_counter==0 :
-            print(round((file_number/len(list_of_files))*100,1),'% complete')
-            print(name_raw_file)       
+            print(round((file_number/len(list_of_files))*100,1),'% complete')    
+        #======================================================================
         
-        
-        #### Processing center ############################################        
-        # Input MS Data - Let's set it importing single file. Later, we can implement the torrent
-        ms_data=om_general_input_data.input_file(dataset_folder,name_raw_file)
-        #print("Start time",ms_data[0].stats.starttime)
-                
+        #### Processing center ================================================
         #Calculating the characteristic function 
         if om_ped_es_parameters_v2.verbose_level <= 1:
-            print_log=True
-            print_plot=True
+            print_log = print_plot = True
         else:
-            print_log=False
-            print_plot=False
-        [stacked,time_array]=om_general_signal_processing.calculate_function(ms_data=ms_data, print_log = print_log, function_kind=3, print_plot=print_plot, stack=True)
+            print_log = print_plot = False
 
+        [stacked,time_array]=om_general_signal_processing.calculate_function(ms_data=ms_data, print_log = print_log, function_kind=3, print_plot=print_plot, stack=True)
             
         #Curve smooth by Moving average
         if om_ped_es_parameters_v2.verbose_level <= 1:
@@ -61,7 +56,7 @@ def energy_stack(dataset_folder,list_of_files,core_counter):
         stacked_ma=om_general_signal_processing.moving_avg(stacked,om_ped_es_parameters_v2.moving_average_samples)
 
         #Detecting highest peaks-positioin into the signal
-        peaks_positions=om_general_signal_processing.detect_peaks(x=stacked_ma, mph=numpy.mean(stacked_ma)+om_ped_es_parameters_v2.threshold_stds*numpy.std(stacked_ma), mpd=om_ped_es_parameters_v2.mpd, show=show)
+        peaks_positions=om_general_signal_processing.detect_peaks(x=stacked_ma, mph=om_ped_es_parameters_v2.threshold_means*numpy.mean(stacked_ma)+om_ped_es_parameters_v2.threshold_stds*numpy.std(stacked_ma), mpd=om_ped_es_parameters_v2.mpd, show=show)
         if om_ped_es_parameters_v2.verbose_level == 0:
             print('Peak position',peaks_positions) #For debugging
         
@@ -83,10 +78,10 @@ def energy_stack(dataset_folder,list_of_files,core_counter):
             identified_events.append([event_time,snr])
             if om_ped_es_parameters_v2.verbose_level <= 1:    
                 print("N.th event time and SNR", identified_events[-1])
-        ###### END OF PROCESSING CENTER ##########################################
+        ### END OF PROCESSING CENTER ==========================================
+    #==========================================================================
 
-    #=============================================
-    # Exporting results
+    ### Exporting results   ===================================================
     PE_Output='PE_Results_Core'+str(core_counter)+'_'+ dataset_folder+'.txt'
     numpy.savetxt(PE_Output, identified_events, delimiter=' ')
     
@@ -96,7 +91,7 @@ def energy_stack(dataset_folder,list_of_files,core_counter):
     # Log
     #if om_ped_es_parameters_v2.verbose_level <= 1:
     print('Core', core_counter, '-> Processing Done!')
-    
+    #==========================================================================
     """
     #=============================================
     ###Printing the processing time ###############################################
