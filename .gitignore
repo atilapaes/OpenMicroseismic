@@ -3,3 +3,5 @@
 1_PED/Atila_PED_ES/Dataset1
 1_PED/Atila_PED_ES/Dataset2
 1_PED/Atila_PED_ES/Dataset3
+__pycache__/*
+*.pyc
