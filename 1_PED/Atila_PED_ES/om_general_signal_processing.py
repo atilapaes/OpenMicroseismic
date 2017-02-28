@@ -492,8 +492,8 @@ def resume_array(original_array, first_sort, second_sort):
 
 #%% Peak evaluation
 #Reviewed
-def peak_evaluation(signal, peaks_positions):
-    import numpy, om_ped_es_functions_v2, om_ped_es_parameters_v2, om_general_signal_processing
+def peak_evaluation(signal, peaks_positions, time_torrent_index):
+    import numpy, om_ped_es_parameters_v2, om_general_signal_processing
     """
     #Getting the left and right coordinates where the peak borders cross the limit condition
     signal:           1-C Vector with peaks.
@@ -507,28 +507,31 @@ def peak_evaluation(signal, peaks_positions):
                 Ex: numpy.mean(V) --> it really makes sense in this context
     """
     threshold=numpy.mean(signal)
-    
     peaks_properties=numpy.zeros((len(peaks_positions),4))
     
-    for peak_counter in range(len(peaks_positions)):
+    
+    # Eliminationg the peaks to close from the borders
+    peaks_positions_sliced=[]
+    for index in range(len(peaks_positions)):
+        if (peaks_positions[index] >= time_torrent_index) and (peaks_positions[index] <= (len(signal)-time_torrent_index)):
+            peaks_positions_sliced.append(peaks_positions[index])
+
+    
+    for peak_counter in range(len(peaks_positions_sliced)):
         
         #Evaluation the peak position and width
-        for index in range(peaks_positions[peak_counter],len(signal)):
+        for index in range(peaks_positions_sliced[peak_counter],len(signal)):
             if signal[index]<threshold:
                 right_idx=index
                 break
-        for index in range(peaks_positions[peak_counter],0,-1):
+        for index in range(peaks_positions_sliced[peak_counter],0,-1):
             if signal[index]<threshold:
                 left_idx=index
                 break        
 
         #Registering the properties of each peak -> Properties other than Position index and SNR can be used later
-        """
-        peaks_properties[peak_counter][0]=peaks_positions[peak_counter]       # Peak position index
-        
-        """        
         peaks_properties[peak_counter][0]=left_idx                           #Arrival index
-        peaks_properties[peak_counter][1]=(signal[peaks_positions[peak_counter]]/numpy.mean(signal))-1  #SNR
+        peaks_properties[peak_counter][1]=(signal[peaks_positions_sliced[peak_counter]]/numpy.mean(signal))-1  #SNR
         peaks_properties[peak_counter][2]=right_idx-left_idx                 #Width of Peak
         
     

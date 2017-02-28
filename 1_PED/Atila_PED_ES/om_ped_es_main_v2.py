@@ -3,15 +3,12 @@
 """
 Created on Thu Feb 16 16:15:53 2017
 
-Modified on Thu Feb 16
-
 @author: Atila Paes
 
 Project:    OpenMicroseismic
 Pack:       Potential-Event Detection
 Method:     Energy-stack
 File:       Main
-Version:    V2
 """
 
 import time, multiprocessing #Importing libraries from Python
@@ -33,7 +30,7 @@ if __name__ == '__main__':
     jobs = []
     for core_counter in range(om_ped_es_parameters_v2.number_of_cores):
         #Defingn inputs and outputs of the task to the cores
-        p = multiprocessing.Process(target=om_ped_es_functions_v2.energy_stack, args=(om_ped_es_parameters_v2.dataset_folder,file_list_for_cores[core_counter][:],core_counter))
+        p = multiprocessing.Process(target=om_ped_es_functions_v2.energy_stack, args=(om_ped_es_parameters_v2.dataset_folder,file_list_for_cores[core_counter][:],core_counter, start_time))
         jobs.append(p)
         p.start()   
 ############################################################################### 
