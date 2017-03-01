@@ -14,8 +14,8 @@ import obspy, numpy, datetime
 def input_file(dataset_folder,file_name):
     ms_data=obspy.read(dataset_folder+"/"+file_name)
     return(ms_data)
-#================================================================================================================
 
+#================================================================================================================
 #%% Returns the content of two concatenated files or a slice of the first + the second
 def concatenate_files(file1,file2,partitial_file1=True,last_seconds=5):
     ms_data_file1=obspy.read(file1)  
@@ -23,156 +23,155 @@ def concatenate_files(file1,file2,partitial_file1=True,last_seconds=5):
 
     if partitial_file1==True:
         ms_data=ms_data_file2    
-        for Channel in range(len(ms_data_file1)):
-            ms_data[Channel] +=ms_data_file1[Channel].slice(ms_data_file1[Channel].stats.endtime-last_seconds,ms_data_file1[Channel].stats.endtime)
+        for channel in range(len(ms_data_file1)):
+            ms_data[channel] +=ms_data_file1[channel].slice(ms_data_file1[channel].stats.endtime-last_seconds,ms_data_file1[channel].stats.endtime)
     else:    
         ms_data=ms_data_file1
-        for Channel in range(len(ms_data_file1)):
-            ms_data[Channel] +=ms_data_file2[Channel]   
+        for channel in range(len(ms_data_file1)):
+            ms_data[channel] +=ms_data_file2[channel]   
     
     return(ms_data)    
     
 #================================================================================================================
-
 #%% Inform a time and extract it from dataset
-def input_time(Input_Time,DatasetName,Delta_Time, Load_Before=2,Load_After=5, Print_Log=False):
+def input_time(input_time,dataset_name,delta_time, load_before=2,load_after=5, print_log=False):
 
     """
-    This module imports MSData from a specific time in a dataset. 
+    This module imports ms_data from a specific time in a dataset. 
     By default, the slice starts 2 seconds before and ends 5 seconds after the specified time.
     Due the short time range, this script doesn't include slices bigger than 2 files.
     
     Parameters
     ----------
-    Input_Time:     A specific time (%Y%m%d%H%M%S).
-    DatasetName:    The name of TXT file contaning the Dataset list. Result from "ls -1 >> Dataset.txt".
-    Delta_Time:     The total monitoring time of each file.
-    Load_Before:    Time in seconds to load before the Input_Time
-    Load_After:     Time in seconds to load after the Input_Time
+    input_time:     A specific time (%Y%m%d%H%M%S).
+    dataset_name:    The name of TXT file contaning the Dataset list. Result from "ls -1 >> Dataset.txt".
+    delta_time:     The total monitoring time of each file.
+    load_before:    Time in seconds to load before the input_time
+    load_after:     Time in seconds to load after the input_time
     
-    Print_Log:  {True or False}, optional (default=False)
-                Print the Log of processing.
+    print_log:  {True or False}, optional (default=False)
+                Print the log of processing.
 
-    Returns a slice of the seismogram from Input_Time - Load_Before to input_Time +Load_After
+    Returns a slice of the seismogram from input_time - load_before to input_time +load_after
     -------------------------------------------------------------------------------------------
     
     FUTURE IMPROVEMENTS:
     -------------------
-    Calculate Delta_Time instead asking the use
+    Calculate delta_time instead asking the use
     """
         
     #%%Variable initialization
-    if Print_Log==True:
+    if print_log==True:
         print("Variable initialization...")
-    ListOfFiles=numpy.genfromtxt(str(DatasetName+".txt"),dtype=str) 
-    Input_Time=datetime.datetime.strptime(Input_Time, '%Y%m%d%H%M%S')
-    Load_Before=datetime.timedelta(seconds=Load_Before)
-    Load_After=datetime.timedelta(seconds=Load_After)
-    TimeOfFiles=[]    
-    Identified_File=[]
+    list_of_files=numpy.genfromtxt(str(dataset_name+".txt"),dtype=str) 
+    input_time=datetime.datetime.strptime(input_time, '%Y%m%d%H%M%S')
+    load_before=datetime.timedelta(seconds=load_before)
+    load_after=datetime.timedelta(seconds=load_after)
+    time_of_files=[]    
+    identified_files=[]
     
     #== Convert txt file in list of time
-    for ii in range(len(ListOfFiles)):
-        TimeOfFiles.append(datetime.datetime.strptime(ListOfFiles[ii].split(".")[0], '%Y%m%d%H%M%S'))
+    for ii in range(len(list_of_files)):
+        time_of_files.append(datetime.datetime.strptime(list_of_files[ii].split(".")[0], '%Y%m%d%H%M%S'))
 
     
     #==First test - Identify if the provided test is into the Dataset list
-    Log=[]
-    Indentification = False
+    log=[]
+    identification = False
     
-    #Verify if the Input_Time is in the time range
-    if Input_Time <= TimeOfFiles[-1] and Input_Time >= TimeOfFiles[0]: 
-        Log.append('INPUT TIME IS IN DATASET RANGE')
+    #Verify if the input_time is in the time range
+    if input_time <= time_of_files[-1] and input_time >= time_of_files[0]: 
+        log.append('INPUT TIME IS IN DATASET RANGE')
         
-        for FileNumber in range(len(ListOfFiles)): #Identifying the file
-            if Input_Time >= TimeOfFiles[FileNumber] and Input_Time <= TimeOfFiles[FileNumber]+datetime.timedelta(seconds=Delta_Time):
-                Indentification = True
+        for file_number in range(len(list_of_files)): #Identifying the file
+            if input_time >= time_of_files[file_number] and input_time <= time_of_files[file_number]+datetime.timedelta(seconds=delta_time):
+                identification = True
                 
                 #Identified file list: 0-Identified file, 1-Previous file, 2-Next file
-                Identified_File=[ListOfFiles[FileNumber],ListOfFiles[FileNumber-1],ListOfFiles[FileNumber+1]]
+                identified_files=[list_of_files[file_number],list_of_files[file_number-1],list_of_files[file_number+1]]
                 
-        if Indentification == False:
-            Log.append("INPUT TIME IS IN A GAP OF MONITORING")
+        if identification == False:
+            log.append("INPUT TIME IS IN A GAP OF MONITORING")
 
     else:
-        Log.append('INPUT TIME IS NOT IN DATASET RANGE')
+        log.append('INPUT TIME IS NOT IN DATASET RANGE')
 
-    if Print_Log == True:
-        print("Log of file identification: ",Log)    
+    if print_log == True:
+        print("Log of file identification: ",log)    
         
     #%% Loading file contaning the time    
-    MSData=obspy.read(str(DatasetName+"/"+Identified_File[0]))
+    ms_data=obspy.read(str(dataset_name+"/"+identified_files[0]))
     
     #NOTE: OBSPY ONLY TAKES TIME ARGUMENTS IN FORMAT OF ITS OWN UTCDateTime
     #Case 1: Slice into single file:
-    if obspy.core.utcdatetime.UTCDateTime(Input_Time - Load_Before) >= MSData[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(Input_Time + Load_After) <= MSData[0].stats.endtime:
-        if Print_Log==True:
+    if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) >= ms_data[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(input_time + load_after) <= ms_data[0].stats.endtime:
+        if print_log==True:
             print("Case 1: Slice into single file.")
-        #MSData=MSData.slice(obspy.core.utcdatetime.UTCDateTime(Input_Time-Load_Before),obspy.core.utcdatetime.UTCDateTime(Input_Time+Load_After))
+        #ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(input_time-load_before),obspy.core.utcdatetime.UTCDateTime(input_time+load_after))
         
     else: #Cases 2 and 3: Time too close of file's border
         
         #Case 2 - Slice to close to file beginning
-        if obspy.core.utcdatetime.UTCDateTime(Input_Time - Load_Before) < MSData[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(Input_Time + Load_After) < MSData[0].stats.endtime:           
-            if Print_Log==True:
+        if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) < ms_data[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(input_time + load_after) < ms_data[0].stats.endtime:           
+            if print_log==True:
                 print("Case 2: Slice too close to file beginning. Merging with previous file.")
-            MSData_Aux=obspy.read(str(DatasetName+"/"+Identified_File[1])) #Loading auxiliar file
+            ms_data_aux=obspy.read(str(dataset_name+"/"+identified_files[1])) #Loading auxiliar file
         
         #Case 3 - Slice too close to file end
-        if obspy.core.utcdatetime.UTCDateTime(Input_Time - Load_Before) > MSData[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(Input_Time + Load_After) > MSData[0].stats.endtime:
-            if Print_Log==True:
+        if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) > ms_data[0].stats.starttime and obspy.core.utcdatetime.UTCDateTime(input_time + load_after) > ms_data[0].stats.endtime:
+            if print_log==True:
                 print("Case 3: Slice too close to file end. Merging with next file.")
-            MSData_Aux=obspy.read(str(DatasetName+"/"+Identified_File[2])) #Loading auxiliar file
-            print("--->>> MSData_Aux",str(DatasetName+"/"+Identified_File[2]))
-            print(MSData_Aux)
+            ms_data_aux=obspy.read(str(dataset_name+"/"+identified_files[2])) #Loading auxiliar file
+            print("--->>> ms_data_aux",str(dataset_name+"/"+identified_files[2]))
+            print(ms_data_aux)
         
         # Merging files - OBSPY automatically reorder time position of arrays  
-        for Channel in range(len(MSData)): 
-            MSData[Channel] += MSData_Aux[Channel]
+        for channel in range(len(ms_data)): 
+            ms_data[channel] += ms_data_aux[channel]
         
-        if Print_Log==True:
+        if print_log==True:
             print("Slice after merge:")
-            print(MSData)
+            print(ms_data)
     
     #Slicing the requested sample
-    MSData=MSData.slice(obspy.core.utcdatetime.UTCDateTime(Input_Time-Load_Before),obspy.core.utcdatetime.UTCDateTime(Input_Time+Load_After))
+    ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(input_time-load_before),obspy.core.utcdatetime.UTCDateTime(input_time+load_after))
 
-    return(MSData)
+    return(ms_data)
+
 #================================================================================================================
-
 #%%    Make a Ring buffer from the first to the last file specified.
-def MakeRingBuffer(FirstFile,LastFile, DatasetName):
+def make_ring_buffer(first_file,last_file, dataset_name):
     """
-    FirstFile:      First File to be loaded in the ring buffer.
-    LastFile:       Last File to be loaded in the ring buffer
-    DatasetName:    Name of the dataset. Same name of folder and TXT file
+    first_file:      First File to be loaded in the ring buffer.
+    last_file:       Last File to be loaded in the ring buffer
+    dataset_name:    Name of the dataset. Same name of folder and TXT file
     
     """
     #%%
-    ListOfFiles=numpy.genfromtxt(str(DatasetName+".txt"),dtype=str) 
-    print("Length of dataset", len(ListOfFiles))
+    list_of_files=numpy.genfromtxt(str(dataset_name+".txt"),dtype=str) 
+    print("Length of dataset", len(list_of_files))
     ListIndex=numpy.zeros(2)
     
     #Identifing the First and last file in the ringbuffer
-    for FileNumber in range(len(ListOfFiles)):
-        if ListOfFiles[FileNumber]==FirstFile:
-            ListIndex[0]=FileNumber
-        if ListOfFiles[FileNumber]==LastFile:
-            ListIndex[1]=FileNumber
+    for file_number in range(len(list_of_files)):
+        if list_of_files[file_number]==first_file:
+            ListIndex[0]=file_number
+        if list_of_files[file_number]==last_file:
+            ListIndex[1]=file_number
     
-    MSData=obspy.read(str(DatasetName+"/"+ListOfFiles[int(ListIndex[0])])) #Loading auxiliar file    
+    ms_data=obspy.read(str(dataset_name+"/"+list_of_files[int(ListIndex[0])])) #Loading auxiliar file    
     
-    for FileNumber in range(int(ListIndex[0])+1,int(ListIndex[1])+1):
-        print(ListOfFiles[FileNumber])
-        MSData_Aux=obspy.read(str(DatasetName+"/"+ListOfFiles[FileNumber])) #Loading auxiliar file  
+    for file_number in range(int(ListIndex[0])+1,int(ListIndex[1])+1):
+        print(list_of_files[file_number])
+        ms_data_aux=obspy.read(str(dataset_name+"/"+list_of_files[file_number])) #Loading auxiliar file  
         
         # Merging files - OBSPY automatically reorder time position of arrays  
-        for Channel in range(len(MSData)): 
-            MSData[Channel] += MSData_Aux[Channel]    
+        for channel in range(len(ms_data)): 
+            ms_data[channel] += ms_data_aux[channel]    
     
-    return(MSData)
-#================================================================================================================
+    return(ms_data)
 
+#================================================================================================================
 #%% Returns the content of two concatenated files or a slice of the first + the second
 
 def input_torrent(dataset_folder, list_of_files, file_number, last_seconds):
@@ -192,8 +191,8 @@ def input_torrent(dataset_folder, list_of_files, file_number, last_seconds):
         for channel in range(len(ms_data_file1)):
             ms_data[channel] +=ms_data_file1[channel].slice(ms_data_file1[channel].stats.endtime-last_seconds,ms_data_file1[channel].stats.endtime)
     return(ms_data)
+    
 #================================================================================================================
-
 #%% Make a list of files to be used in input_torrent
 def split_list_of_files(folder_name, number_of_cores):
     """
@@ -218,4 +217,5 @@ def split_list_of_files(folder_name, number_of_cores):
             file_list_for_cores[list_index]=numpy.insert(file_list_for_cores[list_index],0,file_list_for_cores[list_index-1][-1])
             
     return(file_list_for_cores)
+    
 #================================================================================================================

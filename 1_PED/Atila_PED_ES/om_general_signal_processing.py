@@ -10,7 +10,7 @@ Suppose a file with sequence ABC ABC ABC [...] where ABC is any commutation of H
 Future activities:
 ------------------
 1) Calculate functions and send data to plot in case of 1-C data.
-2) Exclude channels or geophones. Make them zero.
+2) Exclude dead of noisy channels or geophones. (Should I make them zero?)
 
 
 """
@@ -20,106 +20,106 @@ import numpy, matplotlib, math
 from scipy import stats
 
 
-#%% PLOT 3C DATA        
-def Plot3C(Data, Time, Title='Test',Define_Time_Range=False,Time_Range=[1,2]):        
+#%% PLOT 3C data        
+def plot_3c(data, time, title='Test',define_time_range=False,time_range=[1,2]):        
     """"
-    Future Activities: save figure {Dpi, name}, Name the Channels if different than std
+    Future Activities: save figure {Dpi, name}, Name the channels if different than std
     """
-    for geophone in range(int(len(Data)/3)): #Range of number of geophones
-        matplotlib.pyplot.plot(Time,Data[geophone*3+0] + (geophone+1),'r') #First channel  in Red
-        matplotlib.pyplot.plot(Time,Data[geophone*3+1] + (geophone+1),'g') #Second channel in Green
-        matplotlib.pyplot.plot(Time,Data[geophone*3+2] + (geophone+1),'b') #Third channel in in Blue
+    for geophone in range(int(len(data)/3)): #Range of number of geophones
+        matplotlib.pyplot.plot(time,data[geophone*3+0] + (geophone+1),'r') #First channel  in Red
+        matplotlib.pyplot.plot(time,data[geophone*3+1] + (geophone+1),'g') #Second channel in Green
+        matplotlib.pyplot.plot(time,data[geophone*3+2] + (geophone+1),'b') #Third channel in in Blue
             
-    matplotlib.pyplot.xlabel('Time (s)',fontweight='bold',fontsize=12)
-    matplotlib.pyplot.ylabel('Geophones',fontweight='bold',fontsize=12)
-    matplotlib.pyplot.title(Title,fontweight='bold',fontsize=14)
-    if Define_Time_Range==True:
-        matplotlib.pyplot.axis(Time_Range + [0, int(len(Data)/3)+1])
+    matplotlib.pyplot.xlabel('time (s)',fontweight='bold',fontsize=12)
+    matplotlib.pyplot.ylabel('geophones',fontweight='bold',fontsize=12)
+    matplotlib.pyplot.title(title,fontweight='bold',fontsize=14)
+    if define_time_range==True:
+        matplotlib.pyplot.axis(time_range + [0, int(len(data)/3)+1])
     else:
-        matplotlib.pyplot.axis([Time[0], Time[-1], 0, int(len(Data)/3)+1])      
+        matplotlib.pyplot.axis([time[0], time[-1], 0, int(len(data)/3)+1])      
     matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis
     matplotlib.pyplot.show()        
 
 
-#%% PLOT 1C DATA        
-def Plot1C(Data, Time, Title='Test',Define_Time_Range=False,Time_Range=[1,2]):        
+#%% PLOT 1C data        
+def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):        
     """"
-    Future Activities: save figure {Dpi, name}, Name the Channels if different than std
+    Future Activities: save figure {Dpi, name}, Name the channels if different than std
     """
-    for geophone in range(len(Data)): #Range of number of geophones
-        matplotlib.pyplot.plot(Time,Data[geophone] + (geophone+1),'b') 
+    for geophone in range(len(data)): #Range of number of geophones
+        matplotlib.pyplot.plot(time,data[geophone] + (geophone+1),'b') 
             
     matplotlib.pyplot.xlabel('Time (s)',fontweight='bold',fontsize=12)
     matplotlib.pyplot.ylabel('Geophones',fontweight='bold',fontsize=12)
-    matplotlib.pyplot.title(Title,fontweight='bold',fontsize=14)
-    if Define_Time_Range==True:
-        matplotlib.pyplot.axis(Time_Range + [0, len(Data)+1])
+    matplotlib.pyplot.title(title,fontweight='bold',fontsize=14)
+    if define_time_range==True:
+        matplotlib.pyplot.axis(time_range + [0, len(data)+1])
     else:
-        matplotlib.pyplot.axis([Time[0], Time[-1], 0, len(Data)+1])      
+        matplotlib.pyplot.axis([time[0], time[-1], 0, len(data)+1])      
     matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis
     matplotlib.pyplot.show()        
 
 #%% PLOT stack
-def Plotstack(Data, Time, Title='Test',Define_Time_Range=False,Time_Range=[1,2]):        
+def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2]):        
     """"
-    Future Activities: save figure {Dpi, name}, Name the Channels if different than std
+    Future Activities: save figure {Dpi, name}, Name the channels if different than std
     """
-    matplotlib.pyplot.plot(Time,Data,'b') 
+    matplotlib.pyplot.plot(time,data,'b') 
             
     matplotlib.pyplot.xlabel('Time (s)',fontweight='bold',fontsize=12)
     matplotlib.pyplot.ylabel('stack',fontweight='bold',fontsize=12)
-    matplotlib.pyplot.title(Title,fontweight='bold',fontsize=14)
-    if Define_Time_Range==True:
-        matplotlib.pyplot.axis(Time_Range + [0, numpy.max(Data)])
+    matplotlib.pyplot.title(title,fontweight='bold',fontsize=14)
+    if define_time_range==True:
+        matplotlib.pyplot.axis(time_range + [0, numpy.max(data)])
     else:
-        matplotlib.pyplot.axis([Time[0], Time[-1], 0, numpy.max(Data)])      
+        matplotlib.pyplot.axis([time[0], time[-1], 0, numpy.max(data)])      
     matplotlib.pyplot.show()        
 
 
-#%% STA LTA
-def STALTA(Data,STA,LTA):
+#%% sta lta
+def stalta(data,sta,lta):
    
-    STAData=numpy.zeros((len(Data),len(Data[0])))
-    LTAData=numpy.zeros((len(Data),len(Data[0])))    
-    STALTAData=numpy.zeros((len(Data),len(Data[0]))) 
+    sta_data=numpy.zeros((len(data),len(data[0])))
+    lta_data=numpy.zeros((len(data),len(data[0])))    
+    stalta_data=numpy.zeros((len(data),len(data[0]))) 
     
-    for Geophone in range(len(Data)):
+    for geophone in range(len(data)):
         
-        #== LTA Calculation an normalization
-        for LTAIndex in range(LTA,len(Data[0])):
-            LTAData[Geophone][LTAIndex]=numpy.mean(Data[Geophone][LTAIndex-LTA:LTAIndex])
+        #== lta Calculation an normalization
+        for lta_index in range(lta,len(data[0])):
+            lta_data[geophone][lta_index]=numpy.mean(data[geophone][lta_index-lta:lta_index])
         
         #== STA Calculation and normalization
-        for STAIndex in range(LTA-STA,len(Data[0])):
-        #for STAIndex in range(LTA-STA,len(Data[0])-STA):
-            STAData[Geophone][STAIndex]=numpy.mean(Data[Geophone][STAIndex:STAIndex+STA])
+        for sta_index in range(lta-sta,len(data[0])):
+        #for sta_index in range(lta-sta,len(data[0])-sta):
+            sta_data[geophone][sta_index]=numpy.mean(data[geophone][sta_index:sta_index+sta])
         
-        # Defining STALTA (Traditional numpy.divide may returns Nan and Inf). 
+        # Defining stalta (Traditional numpy.divide may returns Nan and Inf). 
         #Defining all conditions to calculate ratio. Otherwise, attribure value Zero
-        for index in range(len(Data[0])):
-            if LTAData[Geophone][index] != 0 and not(math.isnan(LTAData[Geophone][index])) and STAData[Geophone][index] != 0 and not(math.isnan(STAData[Geophone][index])):
-                STALTAData[Geophone][index]=STAData[Geophone][index]/LTAData[Geophone][index]
+        for index in range(len(data[0])):
+            if lta_data[geophone][index] != 0 and not(math.isnan(lta_data[geophone][index])) and sta_data[geophone][index] != 0 and not(math.isnan(sta_data[geophone][index])):
+                stalta_data[geophone][index]=sta_data[geophone][index]/lta_data[geophone][index]
             else:
-                STALTAData[Geophone][index]=0
+                stalta_data[geophone][index]=0
 
         #Normalization
-        STALTAData[Geophone]=STALTAData[Geophone]/numpy.nanmax(STALTAData[Geophone]) #nanmax IGNORES NAN IN THE ARRAY
+        stalta_data[geophone]=stalta_data[geophone]/numpy.nanmax(stalta_data[geophone]) #nanmax IGNORES NAN IN THE ARRAY
         
-    return(STALTAData)
+    return(stalta_data)
             
 #%% CALCULATE CHARACTERISTICS FUNCTIONS
 def calculate_function(ms_data, function_kind=1, stack=False,
                        print_plot=False, print_log = False,
-                       Calculate_STALTA=False, STA=1000, LTA=5000, 
-                       Define_Time_Range=False, Time_Range=[1,1],
-                       SampleKurt=50):
+                       calculate_stalta=False, sta=1000, lta=5000, 
+                       define_time_range=False, time_range=[1,1],
+                       sample_kurt=50):
     """
     This is the core function of the module. It assumes the signal in each channel as velocity.
     It calculates the main characteristic functions of the microseismic signal.
     
     Parameters:
     -----------
-    ms_data:         Data to be used as input.
+    ms_data:         data to be used as input.
     function_kind:  Define the kind of function the user wants:
                 
                     1 - Filetered Waveform.
@@ -127,20 +127,20 @@ def calculate_function(ms_data, function_kind=1, stack=False,
                     3 - V^2 in each geophone (Vx^2+Vy^2+Vz^2) -> MOST USED FUNCTION
                     4 - Modified Energy Ratio (by Wong 2009) |Vx|^3 + |Vy|^3 + |Vz|^3 -> Highlight peaks from background
                     5 - Kurtosis of {V^2 in each geophone}. It performs neither fast or accurate for event detection.
-                        SampleKurt must be even.
+                        sample_kurt must be even.
     stack:          Calculate the stack of signal.
 
     print_plot:     Plots the Characteristic function of given signal.
     print_log:      Used to follow progress and troubleshooting.
     
-    Calculate_STALTA:   Allow the STALTA calculation.
-    STA:                Number of samples in STA.
-    LTA:                Number of samples in LTA.
+    calculate_stalta:   Allow the stalta calculation.
+    sta:                Number of samples in sta.
+    lta:                Number of samples in lta.
         
-    Define_Time_Range:  Allow definition of the plot time-range.
-    Time_Range:         List of two elements with initial and final time.
+    define_time_range:  Allow definition of the plot time-range.
+    time_range:         List of two elements with initial and final time.
     
-    SampleKurt:     Number of samples to calcuate Kurtosis. Use at least 32 to get suitable random sample.
+    sample_kurt:     Number of samples to calcuate Kurtosis. Use at least 32 to get suitable random sample.
     
     """
 #=============================================================================    
@@ -157,7 +157,7 @@ def calculate_function(ms_data, function_kind=1, stack=False,
     #%% FILTERING DATA
 
     #==Defining time array
-    Time=numpy.arange(0,ms_data[0].stats.npts*ms_data[0].stats.delta,ms_data[0].stats.delta)
+    time=numpy.arange(0,ms_data[0].stats.npts*ms_data[0].stats.delta,ms_data[0].stats.delta)
     
     #==Signal treatment
     if print_log == True:
@@ -182,17 +182,17 @@ def calculate_function(ms_data, function_kind=1, stack=False,
     if function_kind == 1: #Verify if Function "1" (Filtered Waveform) was requested
         
         #==Calculate signal square
-        ms_dataFW=numpy.copy(ms_data)
+        ms_data_fw=numpy.copy(ms_data)
         
         #==PLOTTING 
         if print_log == True:
             print('Plotting...')
         if print_plot == True:
-            Plot3C(Data=ms_dataFW, Time=Time, Title='Filtered Waveform',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)
+            plot_3c(data=ms_data_fw, time=time, title='Filtered Waveform',define_time_range=define_time_range,time_range=time_range)
         
         #==Error report about invalid options in waveform
-        if Calculate_STALTA==True:
-            print("Sorry, it's the Waveform. STALTA wasn't calculated or plotted.")
+        if calculate_stalta==True:
+            print("Sorry, it's the Waveform. stalta wasn't calculated or plotted.")
         if stack==True:
             print("Sorry, it's the Waveform. Stack wasn't calculated or plotted.")
         
@@ -200,44 +200,44 @@ def calculate_function(ms_data, function_kind=1, stack=False,
         #== Returning waveform
         if print_log == True:
             print('Returning data...')
-        return(ms_dataFW, Time)
+        return(ms_data_fw, time)
 #=============================================================================
     #%% FUNCTION KIND = 2, SQUARE OF VELOCITY for each CHANNEL
            
     #==Function Filtered Waveform
-    if function_kind == 2: #Verify if Function "2" (Channel V^2) was requested
+    if function_kind == 2: #Verify if Function "2" (channel V^2) was requested
         
         if print_log == True:
             print('Calculating Function V^2 for each channel...')
-        #==Calculate Function V Channel square
-        ms_dataFVC2=numpy.copy(ms_data)
+        #==Calculate Function V channel square
+        ms_data_fvc2=numpy.copy(ms_data)
         
-        for Channel in range(len(ms_data)):
-            ms_dataFVC2[Channel]=numpy.square(ms_data[Channel])
+        for channel in range(len(ms_data)):
+            ms_data_fvc2[channel]=numpy.square(ms_data[channel])
 
-        #== Calculate STALTA
-        if Calculate_STALTA==True:
-            ms_dataFVC2=STALTA(Data=ms_dataFVC2,STA=STA,LTA=LTA)
+        #== Calculate stalta
+        if calculate_stalta==True:
+            ms_data_fvc2=stalta(data=ms_data_fvc2,sta=sta,lta=lta)
         
         #== stack data?
         if stack==False:
             #==PLOTTING         
             if print_plot == True:
-                Plot3C(Data=ms_dataFVC2, Time=Time, Title='V^2 in each channel',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)
+                plot_3c(data=ms_data_fvc2, time=time, title='V^2 in each channel',define_time_range=define_time_range,time_range=time_range)
         else:
-            stacked=numpy.zeros(len(ms_dataFVC2[0]))
-            for Channel in range(len(ms_data)):
-                stacked = numpy.add(stacked,ms_dataFVC2[Channel])
-            ms_dataFVC2=stacked
+            stacked=numpy.zeros(len(ms_data_fvc2[0]))
+            for channel in range(len(ms_data)):
+                stacked = numpy.add(stacked,ms_data_fvc2[channel])
+            ms_data_fvc2=stacked
             
             #==PLOTTING stack        
             if print_plot == True:
-                Plotstack(Data=stacked, Time=Time, Title='stack of V^2 in each channel',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)
+                plot_stack(data=stacked, time=time, title='stack of V^2 in each channel',define_time_range=define_time_range,time_range=time_range)
             
         #== Returning Function
         if print_log == True:
             print('Returning data...')
-        return(ms_dataFVC2, Time)
+        return(ms_data_fvc2, time)
         
     #%% FUNCTION KIND = 3, SQUARE OF VELOCITY for each Geophone  = Vx^2 + Vy^2 + Vz^3
            
@@ -246,36 +246,36 @@ def calculate_function(ms_data, function_kind=1, stack=False,
         
         if print_log == True:
             print('Calculating Function V^2 for each Geophone...')
-        #==Calculate Function V Channel square
-        ms_dataFVG2=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
+        #==Calculate Function V channel square
+        ms_data_fvg2=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
         
-        for Geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
-            ms_dataFVG2[Geophone]=numpy.add(numpy.square(ms_data[Geophone*3+0]),numpy.add(numpy.square(ms_data[Geophone*3+1]),numpy.square(ms_data[Geophone*3+2])))
+        for geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
+            ms_data_fvg2[geophone]=numpy.add(numpy.square(ms_data[geophone*3+0]),numpy.add(numpy.square(ms_data[geophone*3+1]),numpy.square(ms_data[geophone*3+2])))
             
-        #== Calculate STALTA
-        if Calculate_STALTA==True:
-            ms_dataFVG2=STALTA(Data=ms_dataFVG2,STA=STA,LTA=LTA)
+        #== Calculate stalta
+        if calculate_stalta==True:
+            ms_data_fvg2=stalta(data=ms_data_fvg2,sta=sta,lta=lta)
             
          #== stack data?
         if stack==False:
             #==PLOTTING         
             if print_plot == True:
-                Plot1C(Data=ms_dataFVG2, Time=Time, Title='V^2 in each Geophone',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)  
+                plot_1c(data=ms_data_fvg2, time=time, title='V^2 in each Geophone',define_time_range=define_time_range,time_range=time_range)  
         
         else:
-            stacked=numpy.zeros(len(ms_dataFVG2[0]))
-            for Channel in range(len(ms_dataFVG2)):
-                stacked = numpy.add(stacked,ms_dataFVG2[Channel])
-            ms_dataFVG2=stacked
+            stacked=numpy.zeros(len(ms_data_fvg2[0]))
+            for channel in range(len(ms_data_fvg2)):
+                stacked = numpy.add(stacked,ms_data_fvg2[channel])
+            ms_data_fvg2=stacked
             
             #==PLOTTING stack        
             if print_plot == True:
-                Plotstack(Data=ms_dataFVG2, Time=Time, Title='stack of V^2 in each channel',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)   
+                plot_stack(data=ms_data_fvg2, time=time, title='stack of V^2 in each channel',define_time_range=define_time_range,time_range=time_range)   
             
         #== Returning Function
         if print_log == True:
             print('Returning data...')
-        return(ms_dataFVG2, Time)
+        return(ms_data_fvg2, time)
 
 
         
@@ -286,36 +286,36 @@ def calculate_function(ms_data, function_kind=1, stack=False,
         
         if print_log == True:
             print('Calculating Function |V|^3 for each Geophone...')
-        #==Calculate Function V Channel square
-        ms_dataFVG3=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
+        #==Calculate Function V channel square
+        ms_data_fvg3=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
         
-        for Geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
-            ms_dataFVG3[Geophone]=numpy.add(numpy.power(numpy.absolute(ms_data[Geophone*3+0]),3),numpy.add(numpy.power(numpy.absolute(ms_data[Geophone*3+1]),3),numpy.power(numpy.absolute(ms_data[Geophone*3+2]),3)))
+        for geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
+            ms_data_fvg3[geophone]=numpy.add(numpy.power(numpy.absolute(ms_data[geophone*3+0]),3),numpy.add(numpy.power(numpy.absolute(ms_data[geophone*3+1]),3),numpy.power(numpy.absolute(ms_data[geophone*3+2]),3)))
             
-        #== Calculate STALTA
-        if Calculate_STALTA==True:
-            ms_dataFVG3=STALTA(Data=ms_dataFVG3,STA=STA,LTA=LTA)
+        #== Calculate stalta
+        if calculate_stalta==True:
+            ms_data_fvg3=stalta(data=ms_data_fvg3,sta=sta,lta=lta)
             
          #== stack data?
         if stack==False:
             #==PLOTTING         
             if print_plot == True:
-                Plot1C(Data=ms_dataFVG3, Time=Time, Title='|V|^3 in each Geophone',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)  
+                plot_1c(data=ms_data_fvg3, time=time, title='|V|^3 in each Geophone',define_time_range=define_time_range,time_range=time_range)  
         
         else:
-            stacked=numpy.zeros(len(ms_dataFVG3[0]))
-            for Channel in range(len(ms_dataFVG3)):
-                stacked = numpy.add(stacked,ms_dataFVG3[Channel])
-            ms_dataFVG3=stacked
+            stacked=numpy.zeros(len(ms_data_fvg3[0]))
+            for channel in range(len(ms_data_fvg3)):
+                stacked = numpy.add(stacked,ms_data_fvg3[channel])
+            ms_data_fvg3=stacked
             
             #==PLOTTING stack        
             if print_plot == True:
-                Plotstack(Data=ms_dataFVG3, Time=Time, Title='stack of |V|^3 in each channel',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)   
+                plot_stack(data=ms_data_fvg3, time=time, title='stack of |V|^3 in each channel',define_time_range=define_time_range,time_range=time_range)   
             
         #== Returning Function
         if print_log == True:
             print('Returning data...')
-        return(ms_dataFVG3, Time)
+        return(ms_data_fvg3, time)
 ################################################################################
 
 #%% FUNCTION KIND = 5, KURTOSIS OF THE SQUARE VELOCITY OF EACH GEOPHONE -> KURT(V^2)
@@ -327,45 +327,45 @@ def calculate_function(ms_data, function_kind=1, stack=False,
         #==Calculate Function V^2 in each geophone, then, V^3
 
         #==Initialization of Variables
-        ms_dataKurt=numpy.zeros((int(len(ms_data)/3),len(ms_data[0]))) #Initializing the array for Kurtosis
-        #[ms_dataFVG2,Time]=Charac_Functions.calculate_function(ms_data,function_kind=3) #Can't calculte this simple until modify input mehotd in Charac_Functions 
+        ms_data_kurt=numpy.zeros((int(len(ms_data)/3),len(ms_data[0]))) #Initializing the array for Kurtosis
+        #[ms_data_fvg2,time]=Charac_Functions.calculate_function(ms_data,function_kind=3) #Can't calculte this simple until modify input mehotd in Charac_Functions 
                 
-        #==Calculate Function V Channel square
-        ms_dataFVG2=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
+        #==Calculate Function V channel square
+        ms_data_fvg2=numpy.zeros((int(len(ms_data)/3),len(ms_data[0])))
         
-        for Geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
-            ms_dataFVG2[Geophone]=numpy.add(numpy.square(ms_data[Geophone*3+0]),numpy.add(numpy.square(ms_data[Geophone*3+1]),numpy.square(ms_data[Geophone*3+2])))
+        for geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
+            ms_data_fvg2[geophone]=numpy.add(numpy.square(ms_data[geophone*3+0]),numpy.add(numpy.square(ms_data[geophone*3+1]),numpy.square(ms_data[geophone*3+2])))
              
-        for Geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
-            for index in range(int(SampleKurt/2),len(ms_data[0])-int(SampleKurt/2)):
-                ms_dataKurt[Geophone][index]=stats.kurtosis(ms_dataFVG2[Geophone][index-int(SampleKurt/2):index+int(SampleKurt/2)], axis=0, fisher=True, bias=True)
-            MaxKurt=ms_dataKurt[Geophone].max()
-            ms_dataKurt[Geophone]=ms_dataKurt[Geophone]/MaxKurt
+        for geophone in range(int(len(ms_data)/3)): # Signal of Each geophone is defined by sum of squares of each channel
+            for index in range(int(sample_kurt/2),len(ms_data[0])-int(sample_kurt/2)):
+                ms_data_kurt[geophone][index]=stats.kurtosis(ms_data_fvg2[geophone][index-int(sample_kurt/2):index+int(sample_kurt/2)], axis=0, fisher=True, bias=True)
+            max_kurt=ms_data_kurt[geophone].max()
+            ms_data_kurt[geophone]=ms_data_kurt[geophone]/max_kurt
         
-       #== Calculate STALTA
-        if Calculate_STALTA==True:
-            ms_dataKurt=STALTA(Data=ms_dataKurt,STA=STA,LTA=LTA)
+       #== Calculate stalta
+        if calculate_stalta==True:
+            ms_data_kurt=stalta(data=ms_data_kurt,sta=sta,lta=lta)
             
          #== stack data?
         if stack==False:
             #==PLOTTING         
             if print_plot == True:
-                Plot1C(Data=ms_dataKurt, Time=Time, Title='Kurtosis in each Geophone',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)  
+                plot_1c(data=ms_data_kurt, time=time, title='Kurtosis in each Geophone',define_time_range=define_time_range,time_range=time_range)  
         
         else:
-            stacked=numpy.zeros(len(ms_dataKurt[0]))
-            for Channel in range(len(ms_dataKurt)):
-                stacked = numpy.add(stacked,ms_dataKurt[Channel])
-            ms_dataKurt=stacked
+            stacked=numpy.zeros(len(ms_data_kurt[0]))
+            for channel in range(len(ms_data_kurt)):
+                stacked = numpy.add(stacked,ms_data_kurt[channel])
+            ms_data_kurt=stacked
             
             #==PLOTTING stack        
             if print_plot == True:
-                Plotstack(Data=ms_dataKurt, Time=Time, Title='stack of Kurtosis in each Geophone',Define_Time_Range=Define_Time_Range,Time_Range=Time_Range)   
+                plot_stack(data=ms_data_kurt, time=time, title='stack of Kurtosis in each Geophone',define_time_range=define_time_range,time_range=time_range)   
                     
         #== Returning Function
         if print_log == True:
             print('Returning data...')
-        return(ms_dataKurt, Time)
+        return(ms_data_kurt, time)
 ################################################################################
 #%%
 #REVIEWED
@@ -384,8 +384,8 @@ def list_extensions(folder):
     Examples
     --------
     """
-    import om_ped_es_parameters_v2, os
-    if om_ped_es_parameters_v2.verbose_level <= 1:
+    import om_ped_es_parameters, os
+    if om_ped_es_parameters.verbose_level <= 1:
         print('Listing MS files...')
 
     ### Entering in the folder contaning the MS Files
@@ -408,7 +408,7 @@ def list_extensions(folder):
             
     ## Leaving the folder contaning the MS Files
     os.chdir('..')
-    if om_ped_es_parameters_v2.verbose_level <= 1:
+    if om_ped_es_parameters.verbose_level <= 1:
         print('Listing MS files -> Done!')
     return (list_of_ms_files)
 ################################################################################
@@ -438,7 +438,7 @@ def moving_avg(signal,samples):
 
 #%%% ##################################################################################################
 def resume_array(original_array, first_sort, second_sort):
-    import om_ped_es_parameters_v2
+    import om_ped_es_parameters
     """
     This function get an array with repeated values in first_sort column and return 
     one element of same first_sort column with maximum value in second_sort column
@@ -483,7 +483,7 @@ def resume_array(original_array, first_sort, second_sort):
         #print(blocked_array)
         resumed_array.append(blocked_array[0][:])
         
-    if om_ped_es_parameters_v2.verbose_level <= 1: #For debugging
+    if om_ped_es_parameters.verbose_level <= 1: #For debugging
             print('Identified peaks after QC: ',resumed_array) 
     
     return(resumed_array)          
@@ -493,7 +493,7 @@ def resume_array(original_array, first_sort, second_sort):
 #%% Peak evaluation
 #Reviewed
 def peak_evaluation(signal, peaks_positions, time_torrent_index):
-    import numpy, om_ped_es_parameters_v2, om_general_signal_processing
+    import numpy, om_ped_es_parameters, om_general_signal_processing
     """
     #Getting the left and right coordinates where the peak borders cross the limit condition
     signal:           1-C Vector with peaks.
@@ -545,7 +545,7 @@ def peak_evaluation(signal, peaks_positions, time_torrent_index):
     #Some Quality control for the events based in peaks width and SNR
     identified_peaks_qc=[]
     for index in range(len(identified_peaks)):
-        if identified_peaks[index][2] >= om_ped_es_parameters_v2.peak_width_minimum and peaks_properties[index][1]>=om_ped_es_parameters_v2.peak_snr_minimum :
+        if identified_peaks[index][2] >= om_ped_es_parameters.peak_width_minimum and peaks_properties[index][1]>=om_ped_es_parameters.peak_snr_minimum :
             identified_peaks_qc.append(peaks_properties[index][:])
       
     return(identified_peaks_qc) 
@@ -693,7 +693,7 @@ def _plot(x, mph, mpd, threshold, edge, valley, ax, ind):
         ymin, ymax = x[numpy.isfinite(x)].min(), x[numpy.isfinite(x)].max()
         yrange = ymax - ymin if ymax > ymin else 1
         ax.set_ylim(ymin - 0.1*yrange, ymax + 0.1*yrange)
-        ax.set_xlabel('Data #', fontsize=14)
+        ax.set_xlabel('data #', fontsize=14)
         ax.set_ylabel('Amplitude', fontsize=14)
         mode = 'Valley detection' if valley else 'Peak detection'
         ax.set_title("%s (mph=%s, mpd=%d, threshold=%s, edge='%s')"
