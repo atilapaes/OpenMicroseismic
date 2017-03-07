@@ -14,20 +14,24 @@ File:       Parameters
 import multiprocessing
 
 ##################################################################
-#%% Name of the dataset folder
+#%% Dataset injection mode
 #dataset_folder="HornRiver-C88-S9F"
-dataset_folder="Dataset2"
+dataset_folder="Stage1" 
+
+# 0 - Default - need only the dataset_folder.
+# 1 - Input a time list. The file is a csv with time in first column in the format YYYYmmDDhhMMSS.
+data_injection_mode=0
 
 ##################################################################
 #%% Verbose levels
 # 0 - Everything. The code will output everything it is doing. Best for debug.
 # 1 - Entering and leaving main processes. Avg performance with tracking of main activities.
 # 2 - No versose at all. Recommended after extensive testing.
-verbose_level = 0
+verbose_level = 2
 
 ##################################################################
 #%% Number of cores to be used
-use_maximum_cores = False
+use_maximum_cores = True
 core_to_be_used=1 #Define number of cores to use other than maximum
 
 if use_maximum_cores == True:
@@ -45,12 +49,12 @@ moving_average_samples=200
 #%% Detecting peaks
 #Peak identification parameters
 threshold_stds=0 #3 is too restrictive cause it may not detect low-SNR event beside a high-SNR 
-threshold_means=2
+threshold_means=3
 mpd=500 # Minimum peak distance in samples. Due QC, 100 is reasonable number.
 
 # Peaks quality control: 
 peak_width_minimum=500  # Minimum peak width 
-peak_snr_minimum=2      # Minimum peak SNR
+peak_snr_minimum=3    # Minimum peak SNR
 
 # Data torrent parameters 
 last_seconds=6  # Last_seconds = LTA +0.5 sec (Coef. time trust)+ 2 seconds (peak max width)

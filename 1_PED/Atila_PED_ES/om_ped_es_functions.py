@@ -28,9 +28,13 @@ def energy_stack(dataset_folder,list_of_files,core_counter,start_time):
     for file_number in range(len(list_of_files)):
         #print('List of files ',list_of_files)
         
-        ### Loading MS Data using torrent method ==============================
-        ms_data=om_general_input_data.input_torrent(dataset_folder=dataset_folder, list_of_files=list_of_files, file_number=file_number, last_seconds=om_ped_es_parameters.last_seconds)                
-
+        ### Loading MS Data  ==================================================
+        if om_ped_es_parameters.data_injection_mode==0:  # Inject data by Torrent
+            ms_data=om_general_input_data.input_torrent(dataset_folder=dataset_folder, list_of_files=list_of_files, file_number=file_number, last_seconds=om_ped_es_parameters.last_seconds)
+        
+        if om_ped_es_parameters.data_injection_mode==1: # inject data by specific time           
+            ms_data=om_general_input_data.input_time(input_time=list_of_files[file_number],dataset_name=dataset_folder, load_before=5,load_after=5, print_log=False)
+            
         #Software log
         if om_ped_es_parameters.verbose_level <= 2 and core_counter==0 :
             print(round((file_number/len(list_of_files))*100,1),'% complete')    

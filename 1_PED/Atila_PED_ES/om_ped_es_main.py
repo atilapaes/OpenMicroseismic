@@ -20,9 +20,13 @@ start_time = time.time()
 
 print('Initializing Potential-Event detection...')
 
-### List files in folder and split in sub-list to send to cores
-file_list_for_cores=om_general_input_data.split_list_of_files(folder_name=om_ped_es_parameters.dataset_folder, number_of_cores=om_ped_es_parameters.number_of_cores)
+### INJECTION DATA ###########################################################
 
+if om_ped_es_parameters.data_injection_mode==0:  # List files in folder and split in sub-list to send to cores
+    file_list_for_cores=om_general_input_data.split_list_of_files(folder_name=om_ped_es_parameters.dataset_folder, number_of_cores=om_ped_es_parameters.number_of_cores)
+
+if om_ped_es_parameters.data_injection_mode==1: # List based in time
+    file_list_for_cores=om_general_input_data.split_list_of_times(folder_name=om_ped_es_parameters.dataset_folder, number_of_cores=om_ped_es_parameters.number_of_cores) 
 
 ###############################################################################
 ### MULTICORE PROCESSING        
