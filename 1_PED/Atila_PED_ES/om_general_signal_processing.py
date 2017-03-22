@@ -9,9 +9,9 @@ Suppose a file with sequence ABC ABC ABC [...] where ABC is any commutation of H
 
 Future activities:
 ------------------
-1) Calculate functions and send data to plot in case of 1-C data.
+1) Include option for 1-C data.
 2) Exclude dead of noisy channels or geophones. (Should I make them zero?)
-
+3) Deal with null file of file slice
 
 """
 
@@ -42,7 +42,7 @@ def plot_3c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
 
 
 #%% PLOT 1C data        
-def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):        
+def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
     """"
     Future Activities: save figure {Dpi, name}, Name the channels if different than std
     """
@@ -56,14 +56,15 @@ def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
         matplotlib.pyplot.axis(time_range + [0, len(data)+1])
     else:
         matplotlib.pyplot.axis([time[0], time[-1], 0, len(data)+1])      
-    matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis
+    matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis 
     matplotlib.pyplot.show()        
 
 #%% PLOT stack
-def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2]):        
+def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2], save=False):        
     """"
     Future Activities: save figure {Dpi, name}, Name the channels if different than std
     """
+    matplotlib.pyplot.figure()
     matplotlib.pyplot.plot(time,data,'b') 
             
     matplotlib.pyplot.xlabel('Time (s)',fontweight='bold',fontsize=12)
@@ -73,7 +74,10 @@ def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2]
         matplotlib.pyplot.axis(time_range + [0, numpy.max(data)])
     else:
         matplotlib.pyplot.axis([time[0], time[-1], 0, numpy.max(data)])      
-    matplotlib.pyplot.show()        
+    
+    if save == True:
+        matplotlib.pyplot.savefig(title+'.png',format='png', dpi=100)   
+    matplotlib.pyplot.show()
 
 
 #%% sta lta
@@ -111,9 +115,12 @@ def stalta(data,sta,lta):
 def calculate_function(ms_data, function_kind=1, stack=False,
                        print_plot=False, print_log = False,
                        calculate_stalta=False, sta=1000, lta=5000, 
+                       save_plot=False,plot_name='Test.png',
                        define_time_range=False, time_range=[1,1],
                        sample_kurt=50):
     """
+    Future activities: implement save for other kinds of plot.
+    
     This is the core function of the module. It assumes the signal in each channel as velocity.
     It calculates the main characteristic functions of the microseismic signal.
     
@@ -167,7 +174,7 @@ def calculate_function(ms_data, function_kind=1, stack=False,
     ms_data.filter('bandpass', freqmin=30, freqmax=0.5*ms_data[0].stats.sampling_rate, corners=4, zerophase=True)
     
     #==Remove of 60 Hz
-    ms_data.filter('bandstop', freqmin=59.5, freqmax=60.5, corners=4, zerophase=True)
+    #ms_data.filter('bandstop', freqmin=59.5, freqmax=60.5, corners=4, zerophase=True)
     
     #==Normalize signal
     ms_data.normalize()
@@ -429,11 +436,25 @@ def moving_avg(signal,samples):
 
     Examples
     --------
-    """
+    
     signal_ma = numpy.zeros((len(signal),))
     for index in range(len(signal)):
          signal_ma[index] = numpy.sum(signal[index:(index+samples)])
     return (signal_ma/samples)
+    
+    """
+    signal_ma = numpy.zeros((len(signal),))
+    
+    #Regular signal
+    for index in range(samples//2, len(signal)-samples//2):
+        signal_ma[index] = (numpy.sum(signal[index-samples//2:(index+samples//2)]))/samples
+         
+    #Borders of the signal
+    signal_avg = numpy.average(signal_ma[samples//2:len(signal)-samples//2])
+    signal_ma[0:samples//2] = signal_avg
+    signal_ma[len(signal)-samples//2:len(signal)] = signal_avg 
+        
+    return (signal_ma)   
 ################################################################################
 
 #%%% ##################################################################################################
@@ -510,14 +531,24 @@ def peak_evaluation(signal, peaks_positions, time_torrent_index):
     peaks_properties=numpy.zeros((len(peaks_positions),4))
     
     
-    # Eliminationg the peaks to close from the borders
+    # Eliminationg the peaks too close from the borders
+    if om_ped_es_parameters.verbose_level == 0:
+        print('Peaks before border cutting: ',peaks_positions)
+    
     peaks_positions_sliced=[]
     for index in range(len(peaks_positions)):
         if (peaks_positions[index] >= time_torrent_index) and (peaks_positions[index] <= (len(signal)-time_torrent_index)):
             peaks_positions_sliced.append(peaks_positions[index])
-
     
+    if om_ped_es_parameters.verbose_level == 0:
+        print('Peaks after border cutting: ',peaks_positions_sliced)
+
+
+    peaks_properties_qc1=[]
     for peak_counter in range(len(peaks_positions_sliced)):
+        
+        # Bait for Peaks Quality-Control. It garantees all peaks identified have all parameters calculated correctly.
+        right_idx=left_idx=0
         
         #Evaluation the peak position and width
         for index in range(peaks_positions_sliced[peak_counter],len(signal)):
@@ -529,26 +560,48 @@ def peak_evaluation(signal, peaks_positions, time_torrent_index):
                 left_idx=index
                 break        
 
-        #Registering the properties of each peak -> Properties other than Position index and SNR can be used later
+        #Registering the properties of each peak
         peaks_properties[peak_counter][0]=left_idx                           #Arrival index
-        peaks_properties[peak_counter][1]=(signal[peaks_positions_sliced[peak_counter]]/numpy.mean(signal))-1  #SNR
+        peaks_properties[peak_counter][1]=(signal[peaks_positions_sliced[peak_counter]]/numpy.mean(signal))  #SNR
+        #print('Peak level', signal[peaks_positions_sliced[peak_counter]])
+        #print('Peak mean', numpy.mean(signal))
         peaks_properties[peak_counter][2]=right_idx-left_idx                 #Width of Peak
+        peaks_properties[peak_counter][3]=right_idx                         #Right index
         
+        
+        # Quality control 1, baits-based: Use peaks with proper calculated info
+        if (peaks_properties[peak_counter][0] !=0) or (peaks_properties[peak_counter][3] !=0):
+            peaks_properties_qc1.append([peaks_properties[peak_counter][0], peaks_properties[peak_counter][1], peaks_properties[peak_counter][2],peaks_properties[peak_counter][3]])
+    #################################
     
+    # Quality control output
+    if om_ped_es_parameters.verbose_level == 0:
+            print("Peak properties after QC1. Left index, SNR, right index and width: ",peaks_properties)
+    
+            
     #At this point, all info is calculated. Now we have to make sure to exclude repetead peaks
     # Ideal situation: peak with "^"shape. Regular situation:  peak with "M" shape.
     #The method used is to compare the arrival index. If they are the same, keep the peak with maximum SNR
     
-    #lets verify if any of the arraival times are equal:
-    identified_peaks=om_general_signal_processing.resume_array(original_array=peaks_properties, first_sort=0, second_sort=1)
-
-    #Some Quality control for the events based in peaks width and SNR
-    identified_peaks_qc=[]
-    for index in range(len(identified_peaks)):
-        if identified_peaks[index][2] >= om_ped_es_parameters.peak_width_minimum and peaks_properties[index][1]>=om_ped_es_parameters.peak_snr_minimum :
-            identified_peaks_qc.append(peaks_properties[index][:])
-      
-    return(identified_peaks_qc) 
+    peaks_properties_qc2=[] #Variable to be returned
+    
+    if len(peaks_properties_qc1)!=0: # Verifing if any peak last after quality control
+        # Lets verify if any of the arraival times are equal:
+            identified_peaks=om_general_signal_processing.resume_array(original_array=peaks_properties_qc1, first_sort=0, second_sort=1)
+            
+            #>>>>> peaks properties after resume array
+            if om_ped_es_parameters.verbose_level == 0:
+                print('Peaks properties after resume array',identified_peaks)
+            
+            # Second Quality control for the events based in peaks width and SNR
+            for index in range(len(identified_peaks)):
+                if identified_peaks[index][2] >= om_ped_es_parameters.peak_width_minimum and peaks_properties[index][1]>=om_ped_es_parameters.peak_snr_minimum :
+                    peaks_properties_qc2.append(peaks_properties[index][:])
+                
+    if om_ped_es_parameters.verbose_level <= 1:
+        print("Returned values from peak evaluation ",peaks_properties_qc2)               
+    
+    return(peaks_properties_qc2) 
 ################################################################################
 
 #%%

@@ -14,24 +14,26 @@ File:       Parameters
 import multiprocessing
 
 ##################################################################
-#%% Dataset injection mode
-#dataset_folder="HornRiver-C88-S9F"
-dataset_folder="Stage1" 
+#%% Dataset I/O:
+dataset_folder="Dataset"  #Folder contaning the MS files
+save_plot=True                  #Save stack plots for future consult (Must create a folder with name dataset_folder+'_plots')
 
+### Data injection mode
 # 0 - Default - need only the dataset_folder.
-# 1 - Input a time list. The file is a csv with time in first column in the format YYYYmmDDhhMMSS.
-data_injection_mode=0
+# 1 - Input a time list. The file is a csv with time in first column in the format YYYYmmDDhhMMSS
+# 2 - Calculate file by file in a folder
+data_injection_mode=2
 
 ##################################################################
 #%% Verbose levels
 # 0 - Everything. The code will output everything it is doing. Best for debug.
 # 1 - Entering and leaving main processes. Avg performance with tracking of main activities.
-# 2 - No versose at all. Recommended after extensive testing.
-verbose_level = 2
+# 2 - Just the highlights and finished % . Recommended after extensive testing.
+verbose_level = 0
 
 ##################################################################
 #%% Number of cores to be used
-use_maximum_cores = True
+use_maximum_cores = False
 core_to_be_used=1 #Define number of cores to use other than maximum
 
 if use_maximum_cores == True:
@@ -42,19 +44,19 @@ else:
 ##################################################################
 #%% Data processing parameters
  
-#Energy stack processing parameters
+#Number of samples in the moving avg- 200 is our golden value. In lower cases, the signal zig zag to fast
 moving_average_samples=200
 
 ##################################################################
 #%% Detecting peaks
 #Peak identification parameters
-threshold_stds=0 #3 is too restrictive cause it may not detect low-SNR event beside a high-SNR 
-threshold_means=3
-mpd=500 # Minimum peak distance in samples. Due QC, 100 is reasonable number.
+threshold_stds=0    #3 Standart deviation is not a interesting parameter
+threshold_means=2   # Treshold based in a multiple of the mean
+mpd=500             # Minimum distance (in samples) between peaks. Due QC, 100 is minimum reasonable number.
 
 # Peaks quality control: 
 peak_width_minimum=500  # Minimum peak width 
-peak_snr_minimum=3    # Minimum peak SNR
+peak_snr_minimum=2  # Minimum peak SNR
 
 # Data torrent parameters 
 last_seconds=6  # Last_seconds = LTA +0.5 sec (Coef. time trust)+ 2 seconds (peak max width)

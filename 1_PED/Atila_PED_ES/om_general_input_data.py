@@ -97,6 +97,7 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
             if input_time >= time_of_files[file_number] and input_time <= time_of_files[file_number]+datetime.timedelta(seconds=delta_time):
                 identification = True
                 identified_file_number=file_number
+                print(identified_file_number)
                 #identified_start_time=time_of_files[file_number]
                 log.append("INPUT TIME WAS IDENTIFIED")
                 
@@ -110,14 +111,18 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
         log.append('INPUT TIME IS NOT IN DATASET RANGE')
 
     if print_log == True:
-        print("Log of file identification: ",log)    
+        print("Log of file identification: ",log)
+        print('File name ', list_of_files[identified_file_number])
     #==========================================================================    
 
     #%% Loading continuous dataset and slicing the data of interest 
     #== NOTE: OBSPY ONLY TAKES TIME ARGUMENTS IN FORMAT OF ITS OWN UTCDateTime
     if  identification == True: # In case the time is identified into the dataset, let's to slice it from the dataset and return to the workflow
+        #print('identified_files[identified_file_number]',identified_files)
+        #ms_data=obspy.read(str(dataset_name+"/"+identified_files[identified_file_number]))   
         
-        ms_data=obspy.read(str(dataset_name+"/"+identified_files[identified_file_number]))   
+        print('list_of_files[identified_file_number]',list_of_files[identified_file_number])
+        ms_data=obspy.read(dataset_name+"/"+list_of_files[identified_file_number])   
         
         # Case 1: Too close from the file beginning:
         if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) < time_of_files[identified_file_number]:
@@ -349,6 +354,28 @@ def input_torrent(dataset_folder, list_of_files, file_number, last_seconds):
 #================================================================================================================
 #%% Make a list of files to be used in input_torrent
 def split_list_of_files(folder_name, number_of_cores):
+    """
+    List MS Data files in a given dataset. 
+    Divide in N sub-lists.
+    
+    Original list: [a b c d e f g h i j l m]
+    New list:      [a b c] [d e f] [g h i] [j l m]
+    """
+    import numpy, om_general_signal_processing    
+    
+    ### List the MS files in the folder
+    list_of_files=om_general_signal_processing.list_extensions(folder_name)
+    
+    ### Spliting the array in the number of cores to be used- Includes case of N cores =1
+    file_list_for_cores=numpy.array_split(list_of_files,number_of_cores)
+    
+    return(file_list_for_cores)
+    
+#================================================================================================================
+
+
+#%% Make a list of files to be used in input_torrent
+def split_list_of_files_bounded(folder_name, number_of_cores):
     """
     List MS Data files in a given dataset. 
     Divide in N sub-lists.
