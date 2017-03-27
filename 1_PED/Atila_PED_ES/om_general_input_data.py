@@ -97,7 +97,7 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
             if input_time >= time_of_files[file_number] and input_time <= time_of_files[file_number]+datetime.timedelta(seconds=delta_time):
                 identification = True
                 identified_file_number=file_number
-                print(identified_file_number)
+                print("identified_file_number: ", identified_file_number)
                 #identified_start_time=time_of_files[file_number]
                 log.append("INPUT TIME WAS IDENTIFIED")
                 
@@ -112,7 +112,7 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
 
     if print_log == True:
         print("Log of file identification: ",log)
-        print('File name ', list_of_files[identified_file_number])
+        print("File name ", list_of_files[identified_file_number])
     #==========================================================================    
 
     #%% Loading continuous dataset and slicing the data of interest 

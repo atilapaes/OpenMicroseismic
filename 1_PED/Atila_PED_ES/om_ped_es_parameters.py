@@ -15,25 +15,25 @@ import multiprocessing
 
 ##################################################################
 #%% Dataset I/O:
-dataset_folder="Dataset"  #Folder contaning the MS files
-save_plot=True                  #Save stack plots for future consult (Must create a folder with name dataset_folder+'_plots')
+dataset_folder="BRW2Perf"  #Folder contaning the MS files
+save_plot=False                 #Save stack plots for future consult (Must create a folder with name dataset_folder+'_plots')
 
 ### Data injection mode
 # 0 - Default - need only the dataset_folder.
 # 1 - Input a time list. The file is a csv with time in first column in the format YYYYmmDDhhMMSS
 # 2 - Calculate file by file in a folder
-data_injection_mode=2
+data_injection_mode=0
 
 ##################################################################
 #%% Verbose levels
 # 0 - Everything. The code will output everything it is doing. Best for debug.
 # 1 - Entering and leaving main processes. Avg performance with tracking of main activities.
 # 2 - Just the highlights and finished % . Recommended after extensive testing.
-verbose_level = 0
+verbose_level = 2
 
 ##################################################################
 #%% Number of cores to be used
-use_maximum_cores = False
+use_maximum_cores = True
 core_to_be_used=1 #Define number of cores to use other than maximum
 
 if use_maximum_cores == True:
