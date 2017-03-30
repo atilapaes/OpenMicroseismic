@@ -39,7 +39,7 @@ def plot_3c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
         matplotlib.pyplot.axis([time[0], time[-1], 0, int(len(data)/3)+1])      
     matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis
     matplotlib.pyplot.show()        
-
+    matplotlib.pyplot.close()
 
 #%% PLOT 1C data        
 def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
@@ -57,7 +57,8 @@ def plot_1c(data, time, title='Test',define_time_range=False,time_range=[1,2]):
     else:
         matplotlib.pyplot.axis([time[0], time[-1], 0, len(data)+1])      
     matplotlib.pyplot.gca().invert_yaxis() #Invert Y Axis 
-    matplotlib.pyplot.show()        
+    matplotlib.pyplot.show()   
+    matplotlib.pyplot.close()     
 
 #%% PLOT stack
 def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2], save=False):        
@@ -78,6 +79,7 @@ def plot_stack(data, time, title='Test',define_time_range=False,time_range=[1,2]
     if save == True:
         matplotlib.pyplot.savefig(title+'.png',format='png', dpi=100)   
     matplotlib.pyplot.show()
+    matplotlib.pyplot.close()
 
 
 #%% sta lta
@@ -277,7 +279,7 @@ def calculate_function(ms_data, function_kind=1, stack=False,
             
             #==PLOTTING stack        
             if print_plot == True:
-                plot_stack(data=ms_data_fvg2, time=time, title='stack of V^2 in each channel',define_time_range=define_time_range,time_range=time_range)   
+                plot_stack(data=ms_data_fvg2, time=time, title='stack of V^2 in each channel',define_time_range=define_time_range,time_range=time_range)
             
         #== Returning Function
         if print_log == True:

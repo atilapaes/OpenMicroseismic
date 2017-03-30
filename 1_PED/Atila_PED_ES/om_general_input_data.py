@@ -71,10 +71,10 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
     list_of_files=om_general_signal_processing.list_extensions(dataset_name)    
     
     input_time=datetime.datetime.strptime(input_time, '%Y%m%d%H%M%S')
+    load_delta=datetime.timedelta(seconds=load_after+load_before)
     load_before=datetime.timedelta(seconds=load_before)
-    load_after=datetime.timedelta(seconds=load_after)
+    load_after=datetime.timedelta(seconds=load_after)  
     time_of_files=[]    
-    identified_files=[]
 
 
     #== Convert the list of file names in list of time
@@ -88,21 +88,22 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
     ### First test - Identify if the provided test is into the Dataset list
     log=[]
     identification = False
+    identified_file_number=-1
+
     
     #== Verify if the input_time is in the time range =========================
-    if input_time <= time_of_files[-1] and input_time >= time_of_files[0]: #COndition to be in dataset range
+    if (input_time <= time_of_files[-1]+datetime.timedelta(seconds=delta_time)) and (input_time >= time_of_files[0]): #Condition to be in dataset range
         log.append('INPUT TIME IS IN DATASET RANGE')
         
         for file_number in range(len(list_of_files)): #Identifying the file
-            if input_time >= time_of_files[file_number] and input_time <= time_of_files[file_number]+datetime.timedelta(seconds=delta_time):
+
+            if (input_time >= time_of_files[file_number] and input_time <= time_of_files[file_number]+datetime.timedelta(seconds=delta_time)):
+
                 identification = True
+                print('Identified file ',list_of_files[file_number])
                 identified_file_number=file_number
-                print("identified_file_number: ", identified_file_number)
-                #identified_start_time=time_of_files[file_number]
                 log.append("INPUT TIME WAS IDENTIFIED")
-                
-                #Identified file list: 0-Identified file, 1-Previous file, 2-Next file
-                #identified_files=[list_of_files[file_number],list_of_files[file_number-1],list_of_files[file_number+1]]                
+                break
                 
         if identification == False:
             log.append("INPUT TIME IS IN A GAP OF MONITORING")
@@ -112,36 +113,37 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
 
     if print_log == True:
         print("Log of file identification: ",log)
-        print("File name ", list_of_files[identified_file_number])
+        if identification == True:
+            print("File identified: ",list_of_files[identified_file_number])
     #==========================================================================    
 
-    #%% Loading continuous dataset and slicing the data of interest 
+
+    #%% Loading info from continuous dataset and slicing the data of interest 
     #== NOTE: OBSPY ONLY TAKES TIME ARGUMENTS IN FORMAT OF ITS OWN UTCDateTime
     if  identification == True: # In case the time is identified into the dataset, let's to slice it from the dataset and return to the workflow
-        #print('identified_files[identified_file_number]',identified_files)
-        #ms_data=obspy.read(str(dataset_name+"/"+identified_files[identified_file_number]))   
-        
-        print('list_of_files[identified_file_number]',list_of_files[identified_file_number])
-        ms_data=obspy.read(dataset_name+"/"+list_of_files[identified_file_number])   
-        
-        # Case 1: Too close from the file beginning:
-        if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) < time_of_files[identified_file_number]:
+
+        ms_data=obspy.read(dataset_name+"/"+list_of_files[identified_file_number])
     
-            if identified_file_number == 0:
+        # Case 1: Too close from the file beginning:
+        if obspy.core.utcdatetime.UTCDateTime(input_time - load_before) < obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]):
+            print("Case 1: Too close from beginning of a single file.")
+            
+            if identified_file_number == 0: 
                 if print_log==True:
-                    print("Case 2: Slice too close to first file beginning.")
+                    print("Case 1.1: Slice too close from dataset beginning.")
                 
                 # Slice dataset
-                ms_data=ms_data.slice(time_of_files[identified_file_number],time_of_files[identified_file_number]+delta_time)
-            
+                ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]),obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]+load_delta))
+                
+                
             else: # Merging two subsequent files
                 if print_log==True:
-                    print("Case 2: Slice too close to file beginning. Merging with previous file.")
+                    print("Case 1.2: Slice too close to file beginning. Merging with previous file.")
 
                 #Loading auxiliar file
-                ms_data_aux=obspy.read(str(dataset_name+"/"+identified_files[identified_file_number+1]))
-
-                # Merging files - OBSPY automatically reorder time position of arrays  
+                ms_data_aux=obspy.read(str(dataset_name+"/"+list_of_files[identified_file_number-1]))
+                
+                # Merging files - OBSPY automatically reorder time position of arrays acording with the time of each slice
                 for channel in range(len(ms_data)): 
                     ms_data[channel] += ms_data_aux[channel]
 
@@ -150,21 +152,21 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
 
 
         # Case 2: Too close from file end
-        elif (obspy.core.utcdatetime.UTCDateTime(input_time + load_after)) > (time_of_files[identified_file_number]+ datetime.timedelta(seconds=delta_time)):
-            
+        elif (obspy.core.utcdatetime.UTCDateTime(input_time + load_after)) > obspy.core.utcdatetime.UTCDateTime((time_of_files[identified_file_number]+ datetime.timedelta(seconds=delta_time))):
+            print("Case 2")    
             if identified_file_number ==len(time_of_files):
                 if print_log==True:
-                    print("Case 2: Slice too close to first file beginning.")
+                    print("Case 2.1: Slice too close from dataset end.")
                 
                 # Slice dataset
-                ms_data=ms_data.slice(time_of_files[identified_file_number]+delta_time,time_of_files[identified_file_number])
+                ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]+delta_time-load_delta),obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]+delta_time))
             
             else: # Merging two subsequent files
                 if print_log == True:
-                    print("Case 3: Slice too close to file end. Merging with next file.")
+                    print("Case 2.2: Slice too close from file end. Merging with next file.")
 
                 # Loading auxiliar file
-                ms_data_aux=obspy.read(str(dataset_name+"/"+identified_files[identified_file_number-1]))
+                ms_data_aux=obspy.read(str(dataset_name+"/"+list_of_files[identified_file_number+1]))
                 
                 # Merging files - OBSPY automatically reorder time position of arrays  
                 for channel in range(len(ms_data)): 
@@ -174,9 +176,10 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
                 ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(input_time-load_before),obspy.core.utcdatetime.UTCDateTime(input_time+load_after))
         
         # Case 3: Data into a single file
-        elif (obspy.core.utcdatetime.UTCDateTime(input_time - load_before) >= time_of_files[identified_file_number]) and (obspy.core.utcdatetime.UTCDateTime(input_time + load_after) <= time_of_files[identified_file_number]+ datetime.timedelta(seconds=delta_time)):
+        elif (obspy.core.utcdatetime.UTCDateTime(input_time - load_before) >= obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number])) and (obspy.core.utcdatetime.UTCDateTime(input_time + load_after) <= obspy.core.utcdatetime.UTCDateTime(time_of_files[identified_file_number]+ datetime.timedelta(seconds=delta_time))):
+            print("Case 3")
             if print_log==True:
-                print("Case 3: Slice into single file.")
+                print("Case 3.1: Slice into single file.")
 
             # Slicing
             ms_data=ms_data.slice(obspy.core.utcdatetime.UTCDateTime(input_time-load_before),obspy.core.utcdatetime.UTCDateTime(input_time+load_after))
@@ -185,8 +188,6 @@ def input_time(input_time,dataset_name, load_before=2,load_after=5, print_log=Fa
         print('Error loading file: Input time is not into in the dataset.')
 
     return(ms_data)
-
-
 #================================================================================================================
 #%% Inform a time and extract it from dataset
 def input_time_old(input_time,dataset_name,delta_time, load_before=2,load_after=5, print_log=False):
