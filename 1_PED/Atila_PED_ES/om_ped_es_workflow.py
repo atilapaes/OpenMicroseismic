@@ -56,10 +56,13 @@ def energy_stack(dataset_folder,list_of_files,output_file,core_counter,start_tim
         else:
             print_log = print_plot = False
 
-        [stacked,time_array]=om_general_signal_processing.calculate_function(ms_data=ms_data, print_log = print_log, function_kind=3, print_plot=print_plot, stack=True)
+        ### Test in Mar 30, 2017
+        [stacked,time_array]=om_general_signal_processing.calculate_function(ms_data=ms_data, print_log = print_log, function_kind=3, print_plot=False, stack=True) #
         
         # Curve smooth by Moving average
         stacked_ma=om_general_signal_processing.moving_avg(stacked,om_ped_es_parameters.moving_average_samples)
+        
+        #####################
         
         # Save the plots for future consult in a folder with the same name + _plots
         if om_ped_es_parameters.save_plot == True:
@@ -70,40 +73,51 @@ def energy_stack(dataset_folder,list_of_files,output_file,core_counter,start_tim
             show=True
         else:
             show=False
-            
+        
+        #Variable initialization. Otherwise the software will use info from previous loop steps (events)        
+        peaks_positions=[] 
+        peaks_properties=[]
+        
         peaks_positions=om_general_signal_processing.detect_peaks(x=stacked_ma, mph=om_ped_es_parameters.threshold_means*numpy.mean(stacked_ma)+om_ped_es_parameters.threshold_stds*numpy.std(stacked_ma), mpd=om_ped_es_parameters.mpd, show=show)
+        if om_ped_es_parameters.verbose_level <= 1:
+            print("peak_positions and length ",peaks_positions, len(peaks_positions))
+        
         
         # Processing in case of at least one identified peak
-        if len(peaks_positions)!=0: 
-            
+        if len(peaks_positions) > 0: 
+            print("len peaks_position > 0")
             #Calculationg the peaks properties and discarding the repeated events
+           
             peaks_properties=om_general_signal_processing.peak_evaluation(signal=stacked_ma, peaks_positions=peaks_positions, time_torrent_index=int(om_ped_es_parameters.time_torrent_coef/ms_data[0].stats.delta))
             
-            
             if om_ped_es_parameters.verbose_level <= 1:
-                print('Peak properties',peaks_properties) #For debugging
-            
+                print("Peaks properties and length: ", peaks_properties,len(peaks_properties)) #For debugging
             
         # Verify if any peak last after quality control
         if len(peaks_properties)!=0: 
-            if om_ped_es_parameters.verbose_level == 0:
+            if om_ped_es_parameters.verbose_level == 1:
                 print('Peaks properties',peaks_properties) #For debugging
             
             #Calculating time of occurence
             for index in range (len(peaks_properties)):
+                
                 # Output event time in format '%Y%m%d%H%M%S'
                  #Identifing the time in seconds in the time array. Truncked in seconds
                 time_array[int(peaks_properties[index][0])]
                 event_time=int((ms_data[0].stats.starttime+datetime.timedelta(seconds=int(time_array[int(peaks_properties[index][0])]))).strftime('%Y%m%d%H%M%S'))
                 
+                print("Index ", index," Peaks_properties", peaks_properties[index][:], "event_time ", event_time)
+                
+                
                 # Output the SNR with 2 decimal places
                 snr=round(peaks_properties[index][1],2)
                 width=round(peaks_properties[index][2],2)
+                left_idx=int(peaks_properties[index][0])
+                right_idx=int(peaks_properties[index][3])
                 
-                               
                 ### Appending results                
                 output=open(output_file, 'a')
-                output.write(str(event_time) + ',' + str(snr) + ',' + str(width) + '\n')
+                output.write(str(event_time) + ',' + str(snr) + ',' + str(width) + ',' + str(left_idx) +  ',' + str(right_idx) + '\n')
                 output.close()
                 
         ### END OF PROCESSING CENTER ==========================================

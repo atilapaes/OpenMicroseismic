@@ -11,25 +11,29 @@ Method:     Energy-stack
 File:       Parameters
 """
 
-import multiprocessing
+import multiprocessing, os
 
 ##################################################################
 #%% Dataset I/O:
-dataset_folder="BRW2Perf"  #Folder contaning the MS files
-save_plot=False                 #Save stack plots for future consult (Must create a folder with name dataset_folder+'_plots')
+dataset_folder="Dataset_name"  #Folder contaning the MS files
+save_plot=True                 #Save stack plots for future consult (Must create a folder with name dataset_folder+'_plots')
+
+#Verifing if the result folder exists. In negative case, create it
+if not os.path.exists(dataset_folder+"_plots"):
+    os.makedirs(dataset_folder+"_plots")
 
 ### Data injection mode
-# 0 - Default - need only the dataset_folder.
+# 0 - Default - need only the dataset_folder. Concatenate files with part of the previous one.
 # 1 - Input a time list. The file is a csv with time in first column in the format YYYYmmDDhhMMSS
 # 2 - Calculate file by file in a folder
-data_injection_mode=0
+data_injection_mode=2
 
 ##################################################################
 #%% Verbose levels
 # 0 - Everything. The code will output everything it is doing. Best for debug.
 # 1 - Entering and leaving main processes. Avg performance with tracking of main activities.
 # 2 - Just the highlights and finished % . Recommended after extensive testing.
-verbose_level = 2
+verbose_level = 1
 
 ##################################################################
 #%% Number of cores to be used
@@ -55,8 +59,9 @@ threshold_means=2   # Treshold based in a multiple of the mean
 mpd=500             # Minimum distance (in samples) between peaks. Due QC, 100 is minimum reasonable number.
 
 # Peaks quality control: 
-peak_width_minimum=500  # Minimum peak width 
-peak_snr_minimum=2  # Minimum peak SNR
+peak_width_minimum=500  # Minimum peak width
+peak_width_snr=500  # Minimum peak width 
+peak_snr_minimum=2  # Minimum peak SNR -> NOT USED IN THE CODE
 
 # Data torrent parameters 
 last_seconds=6  # Last_seconds = LTA +0.5 sec (Coef. time trust)+ 2 seconds (peak max width)
