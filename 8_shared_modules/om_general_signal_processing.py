@@ -14,7 +14,11 @@ Future activities:
 3) Deal with null file of file slice
 
 """
+#%% Include path to all modules into shared_lib folder
+import sys
+sys.path.insert(0,'/Users/atilapaes/Documents/Python_projects/toc2me/shared_lib/')
 
+#%%
 import numpy, matplotlib, math
 
 from scipy import stats
@@ -112,6 +116,34 @@ def stalta(data,sta,lta):
         stalta_data[geophone]=stalta_data[geophone]/numpy.nanmax(stalta_data[geophone]) #nanmax IGNORES NAN IN THE ARRAY
         
     return(stalta_data)
+#%% sta lta single channel
+def stalta_single_channel(data,sta,lta):
+   
+    sta_data=numpy.zeros(len(data))
+    lta_data=numpy.zeros(len(data))    
+    stalta_data=numpy.zeros(len(data)) 
+            
+    #== lta Calculation an normalization
+    for lta_index in range(lta,len(data)):
+        lta_data[lta_index]=numpy.mean(data[lta_index-lta:lta_index])
+    
+    #== STA Calculation and normalization
+    for sta_index in range(lta-sta,len(data)):
+    #for sta_index in range(lta-sta,len(data[0])-sta):
+        sta_data[sta_index]=numpy.mean(data[sta_index:sta_index+sta])
+    
+    # Defining stalta (Traditional numpy.divide may returns Nan and Inf). 
+    #Defining all conditions to calculate ratio. Otherwise, attribure value Zero
+    for index in range(len(data)):
+        if lta_data[index] != 0 and not(math.isnan(lta_data[index])) and sta_data[index] != 0 and not(math.isnan(sta_data[index])):
+            stalta_data[index]=sta_data[index]/lta_data[index]
+        else:
+            stalta_data[index]=0
+
+    #Normalization
+    stalta_data=stalta_data/numpy.nanmax(stalta_data) #nanmax IGNORES NAN IN THE ARRAY
+        
+    return(stalta_data)
             
 #%% CALCULATE CHARACTERISTICS FUNCTIONS
 def calculate_function(ms_data, function_kind=1, stack=False,
@@ -169,21 +201,21 @@ def calculate_function(ms_data, function_kind=1, stack=False,
     time=numpy.arange(0,ms_data[0].stats.npts*ms_data[0].stats.delta,ms_data[0].stats.delta)
     
     #==Signal treatment
-    if print_log == True:
-        print('Loading Signal treatment...')
+    #if print_log == True:
+    #    print('Loading Signal treatment...')
     
     #==Filtering
-    ms_data.filter('bandpass', freqmin=30, freqmax=0.5*ms_data[0].stats.sampling_rate, corners=4, zerophase=True)
+    #ms_data.filter('bandpass', freqmin=30, freqmax=0.5*ms_data[0].stats.sampling_rate, corners=4, zerophase=True)
     
     #==Remove of 60 Hz
     #ms_data.filter('bandstop', freqmin=59.5, freqmax=60.5, corners=4, zerophase=True)
     
     #==Normalize signal
-    ms_data.normalize()
+    #ms_data.normalize()
     #Multiply by 0.5 to fit in the plot
-    if function_kind==1:  #Necessary just if the function is waveform, once it goes to negative and subsequent Geophones occupy the same space on graph
-        for channel in range(int(len(ms_data))):
-            ms_data[channel].data=ms_data[channel].data*0.5
+    #f function_kind==1:  #Necessary just if the function is waveform, once it goes to negative and subsequent Geophones occupy the same space on graph
+    #    for channel in range(int(len(ms_data))):
+    #        ms_data[channel].data=ms_data[channel].data*0.5
 #=============================================================================    
     #%% FUNCTION KIND =1 NORMALIZED FILTERED WAVEFORM    
            
@@ -376,9 +408,166 @@ def calculate_function(ms_data, function_kind=1, stack=False,
             print('Returning data...')
         return(ms_data_kurt, time)
 ################################################################################
+
+#%% CALCULATE CHARACTERISTICS FUNCTIONS
+def geophone_energy_stack(ms_data_z, ms_data_h1, ms_data_h2,
+                       geophone_index, print_plot=False, print_log = False,
+                       calculate_stalta=False, sta=1000, lta=5000, 
+                       #save_plot=False,plot_name='Test.png', #Not implementend yet
+                       define_time_range=False, time_range=[12,12.5],
+                       kurt_samples=30, mavg_samples=30):
+    
+    import obspy, numpy, matplotlib
+    """    
+    #Future improvement: define the sta and lta in seconds
+    
+    This is the core function of the module. It assumes the signal in each channel as velocity.
+    It calculates the main characteristic functions of the microseismic signal.
+    
+    Parameters:
+    -----------
+    ms_data_z:      Z component of a certain geophone.
+    ms_data_h1:     h1 component of a certain geophone.
+    ms_data_h2:     h2 component of a certain geophone.
+    
+    print_plot:     Plots the stacked function.
+    print_log:      Used to follow progress and troubleshooting.
+    
+    calculate_stalta:   Allow the stalta calculation.
+    sta:                Number of samples in sta.
+    lta:                Number of samples in lta.
+        
+    define_time_range:  Allow definition of the plot time-range.
+    time_range:         List of two elements with initial and final time.
+    
+    """
+
+    #%% Calculating Characteristic Function, SQUARE OF VELOCITY for each CHANNEL
+    if print_log == True:
+        print('Calculating characteristic functions...')
+    
+    # Defining time array
+    time=numpy.arange(0,ms_data_z.stats.npts*ms_data_z.stats.delta,ms_data_z.stats.delta)
+     
+    #==Square data in each channel
+    ms_data_z_squared=numpy.square(ms_data_z.data)
+    ms_data_h1_squared=numpy.square(ms_data_h1.data)
+    ms_data_h2_squared=numpy.square(ms_data_h2.data)
+    
+    #== Stack V^2 data
+    stacked=numpy.zeros(len(ms_data_z))
+    stacked = numpy.add(stacked, ms_data_z_squared)
+    stacked = numpy.add(stacked, ms_data_h1_squared)
+    stacked = numpy.add(stacked,  ms_data_h2_squared)
+    stacked = stacked/stacked.max(axis=0)
+    
+    #== Calculate Stacked
+    stacked_stalta=stalta_single_channel(data=stacked,sta=sta,lta=lta)
+    stacked_stalta = stacked_stalta/stacked_stalta.max(axis=0)
+    
+    stacked_mavg = moving_avg_arriving(signal=stacked,mavg_samples=mavg_samples)
+    
+    stacked_mavg_diff=numpy.diff(stacked_mavg)
+    stacked_mavg_diff=numpy.append(stacked_mavg_diff,[[0]])
+    stacked_mavg_diff=abs(stacked_mavg_diff/stacked_mavg_diff.max())
+    
+    """
+    cube=abs(numpy.power(stacked,1.5)/numpy.power(stacked,1.5).max())
+    cube_mavg=moving_avg_arriving(signal=cube,mavg_samples=mavg_samples)
+    cube_mavg=cube_mavg/cube_mavg.max()
+    """
+    
+    kurtosis=kurtosis_single_channel(signal=ms_data_h1_squared, kurt_samples=kurt_samples)
+    
+    
+    kurt_diff=numpy.diff(kurtosis)
+    kurt_diff=numpy.append(kurt_diff,[[0]])
+    kurt_diff=kurt_diff/kurt_diff.max()
+    
+    
+    kurt_diff_max_time=time[6000+numpy.argmax(kurt_diff[6000:6100])]
+    print('Kurtosis index',6000+numpy.argmax(kurt_diff[6000:6100]) )
+    print('max kurtosis diff ', kurt_diff_max_time)
+    
+    
+    #== Plots
+    if print_plot==True:
+        print('Plotting...')
+        
+        fig, axs = matplotlib.pyplot.subplots(3, 1, sharex=True, figsize=(10,10))
+               
+        ax=axs[0]
+        ax.plot(time,ms_data_z,'r',time,ms_data_h1,'g',time,ms_data_h2,'b')
+        ax.set_title('Geophone '+str(geophone_index))
+        ax.set_ylabel('Waveform')
+        ax.set_yticks(numpy.arange(-1, 1, 0.5))
+        ax.axvline(x=kurt_diff_max_time)
+        
+        
+        ax=axs[1]
+        ax.plot(time, stacked, time, stacked_mavg,'r', time, stacked_mavg_diff, 'b')
+        ax.set_ylabel('S.E.')
+        ax.set_yticks(numpy.arange(0.25, 1, 0.25))
+        ax.axvline(x=kurt_diff_max_time)
+             
+        """
+        ax=axs[2]
+        ax.plot(time, stacked_mavg,'r.-', time, stacked_mavg_diff, 'b.-')
+        ax.set_ylabel('SE-mavg')
+        ax.set_yticks(numpy.arange(0.25, 1, 0.25))
+        ax.axvline(x=kurt_diff_max_time)
+        """
+        
+        ax=axs[2]
+        ax.plot(time, kurtosis, time, kurt_diff,'r')
+        ax.set_ylabel('kurt')
+        ax.axvline(x=kurt_diff_max_time)
+        
+        if define_time_range==True:            
+            ax.set_xlim(left=time_range[0], right=time_range[1])        
+        
+        ax.set_xlabel('time (s)')              
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())  
+
+        matplotlib.pyplot.show()
+              
+    return(stacked)
+   
+################################################################################
+#%% CALCULATE Kurtosis function
+def kurtosis_single_channel(signal, kurt_samples):
+    import numpy
+    from scipy import stats
+    
+    #==Initialization of Variables
+    signal_kurt=numpy.zeros(len(signal)) #Initializing the array for Kurtosis
+    
+    for index in range(kurt_samples,len(signal)):
+        signal_kurt[index]=stats.kurtosis(signal[index:index+kurt_samples], axis=0, fisher=True, bias=True)
+    signal_kurt=signal_kurt/signal_kurt.max()
+    
+    return(signal_kurt)
+
+
+################################################################################
+#%% CALCULATE Kurtosis function
+def kurtosis_single_channel(signal, kurt_samples):
+    import numpy
+    from scipy import stats
+    
+    #==Initialization of Variables
+    signal_kurt=numpy.zeros(len(signal)) #Initializing the array for Kurtosis
+    
+    for index in range(kurt_samples,len(signal)):
+        signal_kurt[index]=stats.kurtosis(signal[index:index+kurt_samples], axis=0, fisher=True, bias=True)
+    signal_kurt=signal_kurt/signal_kurt.max()
+    
+    return(signal_kurt)
+
+
 #%%
 #REVIEWED
-def list_extensions(folder):
+def list_extensions(folder, verbose_level=1):
     """
     This function list all the (segy, sgy, dat) files into the speciefied folder.
     
@@ -393,8 +582,8 @@ def list_extensions(folder):
     Examples
     --------
     """
-    import om_ped_es_parameters, os
-    if om_ped_es_parameters.verbose_level <= 1:
+    import os
+    if verbose_level <= 1:
         print('Listing MS files...')
 
     ### Entering in the folder contaning the MS Files
@@ -417,7 +606,7 @@ def list_extensions(folder):
             
     ## Leaving the folder contaning the MS Files
     os.chdir('..')
-    if om_ped_es_parameters.verbose_level <= 1:
+    if verbose_level <= 1:
         print('Listing MS files -> Done!')
     return (list_of_ms_files)
 ################################################################################
@@ -428,16 +617,7 @@ def moving_avg(signal,samples):
     """
     This function calculates the moving average of a provided 1-C signal (array).
     
-    Parameters
-    ----------
-    folder : Name of the folder that contains the files to be listed.
     
-    Returns
-    -------
-    list_of_files : List of files with the extensions listed in parameters file.
-
-    Examples
-    --------
     
     signal_ma = numpy.zeros((len(signal),))
     for index in range(len(signal)):
@@ -457,6 +637,36 @@ def moving_avg(signal,samples):
     signal_ma[len(signal)-samples//2:len(signal)] = signal_avg 
         
     return (signal_ma)   
+################################################################################
+#%% Math functions to manipulate data #########################################
+""" REVIEWED"""   
+def moving_avg_arriving(signal,mavg_samples):
+    """
+    This function calculates the moving average of a provided 1-C signal (array).
+    
+    
+    
+    signal_ma = numpy.zeros((len(signal),))
+    for index in range(len(signal)):
+         signal_ma[index] = numpy.sum(signal[index:(index+samples)])
+    return (signal_ma/samples)
+    
+    """
+    signal_ma = numpy.zeros((len(signal),))
+    
+    #Regular signal
+    for index in range(mavg_samples, len(signal)-mavg_samples):
+        signal_ma[index] = (numpy.sum(signal[index:(index+mavg_samples)]))/mavg_samples
+
+    signal_mean=numpy.mean(signal_ma[mavg_samples:len(signal)-mavg_samples])
+    
+    for index in range(0,mavg_samples):
+        signal_ma[index] = signal_mean
+
+    for index in range(len(signal)-mavg_samples, len(signal)):
+        signal_ma[index] = signal_mean
+       
+    return (signal_ma/signal_ma.max())   
 ################################################################################
 
 #%%% ##################################################################################################
@@ -743,6 +953,8 @@ def _plot(x, mph, mpd, threshold, edge, valley, ax, ind):
             label = label + 's' if ind.size > 1 else label
             ax.plot(ind, x[ind], '+', mfc=None, mec='r', mew=2, ms=8,
                     label='%d %s' % (ind.size, label))
+            ax.axhline(mph,color='cyan')
+            
             ax.legend(loc='best', framealpha=.5, numpoints=1)
         ax.set_xlim(-.02*x.size, x.size*1.02-1)
         ymin, ymax = x[numpy.isfinite(x)].min(), x[numpy.isfinite(x)].max()
