@@ -9,7 +9,9 @@ Functions for ATP module
 
 """
 import sys
-sys.path.insert(0,'/Users/atilapaes/Documents/GitHub/OpenMicroseismic/8_shared_modules')
+om_root_folder=''
+sys.path.insert(0,om_root_folder+'8_shared_modules')
+
 
 #%%
 import numpy
