@@ -5,8 +5,16 @@ Created on Tue Dec 12 18:34:48 2017
 
 @author: atilapaes
 
-
+This file is used to create the IO files for Open Microseismic project
 """
+
+
+#%% Create files of filenames and time
+
+
+# For later importing the info in the output files
+#sample=pandas.read_csv('sample.csv')
+#sample['date_time'] = list(map(lambda x: obspy.core.utcdatetime.UTCDateTime(x), sample.date_time))
 
 dataset_name='sample'
 files_path='Files/'
@@ -30,7 +38,7 @@ def output_file_datetime(dataset_name,files_path,extension):
     file_time_df=file_time_df.sort_values('date_time')
     file_time_df.to_csv(dataset_name+'.csv', sep=',', line_terminator='\n', index=False)
 
+output_file_datetime(dataset_name,files_path,extension)
 
-# Importing 
-#sample=pandas.read_csv('sample.csv')
-#sample['date_time'] = list(map(lambda x: obspy.core.utcdatetime.UTCDateTime(x), sample.date_time))
+#%%
+
